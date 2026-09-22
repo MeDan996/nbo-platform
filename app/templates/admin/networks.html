@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}networks{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>networks &amp; devices</h1>
+  <p class="text-muted">
+    A verified school network is allowlisted, so a whole computer lab can sit the
+    same exam without tripping the shared-address block.
+  </p>
+
+  <div class="card card-flush" style="margin-bottom:20px">
+    <div class="card-head"><h2 style="font-size:18px">addresses</h2></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>ip</th><th>{{ t('admin.users') }}</th><th>{{ t('auth.school') }}</th>
+          <th>status</th><th>last seen</th><th></th></tr></thead>
+        <tbody>
+        {% for record in ips %}
+          <tr>
+            <td class="mono">{{ record.ip_address }}</td>
+            <td class="num"><b>{{ record.distinct_user_count }}</b></td>
+            <td class="text-small">{{ record.school.name if record.school else '—' }}</td>
+            <td>
+              {% if record.is_blocked %}<span class="badge badge-red">blocked</span>
+              {% elif record.is_allowlisted %}<span class="badge badge-green">allowlisted</span>
+              {% else %}<span class="badge badge-outline">—</span>{% endif %}
+            </td>
+            <td class="text-small text-muted">{{ record.last_seen | since }}</td>
+            <td class="text-right nowrap">
+              <form method="post" action="/admin/networks/{{ record.id }}" class="row inline-form">
+                <select name="school_id" style="width:auto">
+                  <option value="">—</option>
+                  {% for school in schools %}
+                    <option value="{{ school.id }}" {{ 'selected' if record.school_id == school.id }}>{{ school.name }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-success" name="action" value="allowlist">allow</button>
+                <button class="btn btn-sm btn-danger" name="action" value="block">block</button>
+                <button class="btn btn-sm btn-outline" name="action" value="clear">clear</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="card-head"><h2 style="font-size:18px">devices with several accounts</h2></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>fingerprint</th><th>{{ t('admin.users') }}</th><th>last seen</th></tr></thead>
+        <tbody>
+        {% for device in devices %}
+          <tr><td class="mono text-small">{{ device.fingerprint }}</td>
+            <td class="num"><b class="delta-down">{{ device.distinct_user_count }}</b></td>
+            <td class="text-small text-muted">{{ device.last_seen | since }}</td></tr>
+        {% else %}
+          <tr><td class="text-muted">{{ t('common.empty') }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

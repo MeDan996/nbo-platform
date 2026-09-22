@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ t('admin.schools') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('admin.schools') }}</h1>
+
+  <div class="card" style="margin:16px 0">
+    <h2 style="font-size:18px">{{ t('admin.allowlist_ip') }}</h2>
+    <form method="post" action="/admin/schools">
+      <input type="hidden" name="school_id" value="">
+      <div class="grid grid-3" style="gap:12px">
+        <div class="field"><label for="name">{{ t('auth.school') }}</label>
+          <input id="name" name="name" required></div>
+        <div class="field"><label for="city">city</label><input id="city" name="city"></div>
+        <div class="field"><label for="region">region</label><input id="region" name="region"></div>
+      </div>
+      <div class="field">
+        <label for="cidrs">networks (one CIDR per line)</label>
+        <textarea id="cidrs" name="cidrs" rows="3" placeholder="212.42.101.0/24"></textarea>
+        <div class="field-hint">
+          Registering the lab's public range stops thirty classmates being read as thirty duplicate accounts.
+        </div>
+      </div>
+      <div class="row">
+        <div class="field" style="margin:0"><label for="max_from_ip">max accounts / IP</label>
+          <input id="max_from_ip" name="max_from_ip" type="number" value="40" min="1"></div>
+        <div class="checkbox" style="padding-top:22px">
+          <input type="checkbox" id="is_verified" name="is_verified" value="1">
+          <label for="is_verified">verified</label></div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary" type="submit" style="margin-top:20px">{{ t('common.save') }}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('auth.school') }}</th><th>city</th><th>networks</th>
+          <th class="num">{{ t('admin.users') }}</th><th></th></tr></thead>
+        <tbody>
+        {% for school in schools %}
+          <tr>
+            <td><b>{{ school.name }}</b>
+              {% if school.is_verified %}<span class="badge badge-green">verified</span>{% endif %}</td>
+            <td class="text-small">{{ school.city or '—' }}</td>
+            <td class="mono text-small">{{ (school.allowlisted_cidrs or []) | join(', ') or '—' }}</td>
+            <td class="num">{{ counts.get(school.id, 0) }}</td>
+            <td class="text-right">
+              <form method="post" action="/admin/schools" class="row inline-form">
+                <input type="hidden" name="school_id" value="{{ school.id }}">
+                <input type="hidden" name="name" value="{{ school.name }}">
+                <input type="hidden" name="city" value="{{ school.city or '' }}">
+                <input type="hidden" name="region" value="{{ school.region or '' }}">
+                <input name="cidrs" value="{{ (school.allowlisted_cidrs or []) | join(', ') }}" style="width:200px">
+                <input type="hidden" name="max_from_ip" value="{{ school.max_concurrent_from_ip }}">
+                <input type="hidden" name="is_verified" value="1">
+                <button class="btn btn-sm btn-outline" type="submit">{{ t('common.save') }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

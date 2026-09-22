@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import user_chip, histogram, risk_meter %}
+{% block title %}{{ exam.localized_title(locale) }} — {{ t('nav.leaderboard') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/survival/{{ exam.slug }}">← {{ exam.localized_title(locale) }}</a>
+  <h1 style="margin-top:12px">{{ t('nav.leaderboard') }}</h1>
+
+  <div class="grid grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <h3 style="font-size:16px">{{ t('results.distribution') }}</h3>
+      {{ histogram(exam_stats.histogram) }}
+    </div>
+    <div class="card">
+      <h3 style="font-size:16px">{{ t('nav.statistics') }}</h3>
+      <table class="data">
+        <tbody>
+          <tr><td>{{ t('landing.stat.participants') }}</td><td class="num"><b>{{ exam_stats.participants }}</b></td></tr>
+          <tr><td>{{ t('results.cohort_average') }}</td><td class="num">{{ exam_stats.mean_score | points }}</td></tr>
+          <tr><td>median</td><td class="num">{{ exam_stats.median_score | points }}</td></tr>
+          <tr><td>max</td><td class="num">{{ exam_stats.max_score | points }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th style="width:56px">#</th><th>{{ t('auth.full_name') }}</th><th>{{ t('auth.school') }}</th>
+          <th class="num">{{ t('results.score') }}</th><th class="num">%</th>
+          {% if exam.is_rated %}<th class="num">Δ</th>{% endif %}
+          {% if user and user.is_admin %}<th class="num">{{ t('admin.risk_score') }}</th>{% endif %}
+        </tr></thead>
+        <tbody>
+        {% for attempt in rows %}
+          <tr {% if user and attempt.user_id == user.id %}style="background:var(--blue-light)"{% endif %}>
+            <td><b>{{ attempt.rank or loop.index }}</b></td>
+            <td>{{ user_chip(attempt.user, 'sm') }}</td>
+            <td class="text-small text-muted">{{ attempt.user.school.name if attempt.user.school else '—' }}</td>
+            <td class="num"><b>{{ attempt.raw_score | points }}</b></td>
+            <td class="num">{{ attempt.percent | round | int }}%</td>
+            {% if exam.is_rated %}
+              <td class="num {{ 'delta-up' if (attempt.rating_delta or 0) > 0 else 'delta-down' }}">
+                {{ ('%+d' | format(attempt.rating_delta)) if attempt.rating_delta is not none else '—' }}
+              </td>
+            {% endif %}
+            {% if user and user.is_admin %}
+              <td class="num">
+                {% if attempt.risk_score %}
+                  <a href="/admin/attempt/{{ attempt.id }}">{{ risk_meter(attempt.risk_score) }}</a>
+                {% else %}—{% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

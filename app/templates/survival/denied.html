@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ t('denied.title') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page" style="max-width:560px">
+  <div class="card card-accent" style="border-top-color:var(--red)">
+    <h1 style="font-size:24px">{{ t('denied.title') }}</h1>
+    <div class="flash flash-warn">{{ t('denied.' ~ decision.message) }}</div>
+    <p class="text-muted">{{ t('denied.contact') }}</p>
+    <div class="panel mono text-small">
+      exam={{ exam.slug }}<br>
+      rule={{ decision.rule }}<br>
+      user={{ user.username }}<br>
+      at={{ now | dt('%Y-%m-%d %H:%M UTC') }}
+    </div>
+    <div class="row" style="margin-top:18px">
+      <a class="btn btn-outline" href="/survival">{{ t('common.back') }}</a>
+      <a class="btn btn-primary" href="/practice">{{ t('nav.practice') }}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

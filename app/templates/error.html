@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ status_code }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page text-center">
+  <div style="font-size:72px;font-weight:800;color:var(--line-2);line-height:1">{{ status_code }}</div>
+  <h1>
+    {% if status_code == 404 %}{{ t('common.not_found') }}
+    {% elif status_code == 403 %}{{ t('common.forbidden') }}
+    {% else %}{{ t('common.error') }}{% endif %}
+  </h1>
+  <p class="text-muted mono">{{ detail }}</p>
+  <a class="btn btn-primary" href="/">{{ t('nav.home') }}</a>
+</div>
+{% endblock %}

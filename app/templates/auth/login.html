@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ t('auth.login.title') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page" style="max-width:420px">
+  <div class="card">
+    <h1 style="font-size:24px">{{ t('auth.login.title') }}</h1>
+    {% for error in errors %}<div class="flash flash-error">{{ t(error) }}</div>{% endfor %}
+    <form method="post" action="/auth/login">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="login">{{ t('auth.login_or_email') }}</label>
+        <input id="login" name="login" type="text" required autofocus
+               autocomplete="username" value="{{ login_value or '' }}">
+      </div>
+      <div class="field">
+        <label for="password">{{ t('auth.password') }}</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">{{ t('auth.submit_login') }}</button>
+    </form>
+    <p class="text-center text-small text-muted" style="margin:18px 0 0">
+      {{ t('auth.no_account') }} <a href="/auth/register">{{ t('nav.register') }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

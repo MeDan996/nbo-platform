@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.localized_title(locale) }}{% endblock %}
+{% block body_class %}exam-mode{% endblock %}
+
+{# The exam shell replaces the site header: nothing should tempt a participant
+   to navigate away mid-sitting. #}
+{% block header %}
+<div class="exam-bar">
+  <div class="wrap">
+    <span class="exam-title grow">{{ exam.localized_title(locale) }}</span>
+
+    <span class="save-state" id="save-state">
+      <span class="dot"></span><span id="save-label">{{ t('survival.saved') }}</span>
+    </span>
+
+    <span class="text-small" style="opacity:.85">
+      <b id="count-answered">{{ progress.answered }}</b>/<span id="count-total">{{ progress.total }}</span>
+      {{ t('survival.answered') | lower }}
+    </span>
+
+    <span class="timer" id="timer" role="timer" aria-live="off"
+          aria-label="{{ t('survival.time_remaining') }}">--:--</span>
+
+    <button class="btn btn-sm btn-success" id="submit-btn" type="button">
+      {{ t('survival.submit') }}
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="wrap page" id="exam-root"
+     data-attempt-id="{{ attempt.id }}"
+     data-remaining="{{ seconds_remaining }}"
+     data-strings='{{ {
+        "saving": t("survival.saving"),
+        "saved": t("survival.saved"),
+        "save_failed": t("survival.save_failed"),
+        "time_up": t("survival.time_up"),
+        "time_warning_900": "15 " ~ t("common.minutes"),
+        "time_warning_300": "5 " ~ t("common.minutes"),
+        "time_warning_60": "1 " ~ t("common.minutes")
+     } | tojson }}'>
+
+  <div class="exam-layout">
+    <div>
+      {% for item in questions %}
+      {% set q = item.question %}
+      {% set tr = q.tr(locale) %}
+      <article class="question-card" hidden
+               data-question-card
+               data-index="{{ item.index }}"
+               data-exam-question-id="{{ item.exam_question.id }}"
+               data-question-type="{{ q.question_type }}"
+               data-flagged="{{ '1' if item.answer.flagged_for_review else '0' }}">
+
+        <header class="question-head">
+          <span class="question-number">{{ t('survival.question_n', n=item.index, total=questions|length) }}</span>
+          {% if item.section %}
+            <span class="badge badge-blue">{{ item.section.localized_title(locale) }}</span>
+          {% endif %}
+          <span class="badge badge-outline">{{ item.answer.max_points | points }} {{ t('survival.points') | lower }}</span>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-sm btn-outline" data-flag
+                  aria-pressed="{{ 'true' if item.answer.flagged_for_review else 'false' }}">
+            ⚑ {{ t('survival.mark_review') }}
+          </button>
+        </header>
+
+        <div class="question-body">
+          {% if tr and tr.title %}<h3>{{ tr.title }}</h3>{% endif %}
+          {{ (tr.stem if tr else '') | md | safe }}
+          {% if tr and tr.instructions %}
+            <div class="panel panel-info" style="margin-top:14px">{{ tr.instructions | md | safe }}</div>
+          {% endif %}
+        </div>
+
+        {% if q.figures %}
+        <div class="question-figures">
+          {% for figure in q.figures %}
+          <figure class="figure">
+            <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}" loading="lazy">
+            {% if figure.caption(locale) %}<figcaption>{{ figure.caption(locale) }}</figcaption>{% endif %}
+          </figure>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if q.question_type in ('tf_block',) %}
+          <div class="panel" style="margin:0 24px 8px;font-size:13.5px;color:var(--muted)">
+            {{ t('survival.tf_hint') }}
+          </div>
+          <div class="statements">
+            {% for statement in item.statements %}
+            {% set given = item.answer.response.get(statement.id | string) %}
+            <div class="statement {{ 'is-answered' if given is not none }}"
+                 data-statement data-statement-id="{{ statement.id }}">
+              <div class="st-label">{{ 'ABCDEFGH'[loop.index0] }}</div>
+              <div class="st-text">{{ statement.text(locale) | md | safe }}</div>
+              <div class="tf-group">
+                <button type="button" class="tf-btn" data-value="true"
+                        aria-pressed="{{ 'true' if given is true else 'false' }}">
+                  {{ t('survival.true') }}
+                </button>
+                <button type="button" class="tf-btn" data-value="false"
+                        aria-pressed="{{ 'true' if given is false else 'false' }}">
+                  {{ t('survival.false') }}
+                </button>
+                <button type="button" class="tf-clear">{{ t('survival.clear') }}</button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+        {% elif q.question_type in ('mcq_single', 'mcq_multi') %}
+          <div class="choices">
+            {% for statement in item.statements %}
+            {% set chosen = item.answer.response.get(statement.id | string) %}
+            <label class="choice {{ 'is-selected' if chosen }}">
+              <input type="{{ 'radio' if q.question_type == 'mcq_single' else 'checkbox' }}"
+                     name="q{{ item.exam_question.id }}"
+                     data-choice data-statement-id="{{ statement.id }}"
+                     {{ 'checked' if chosen }}>
+              <span>{{ statement.text(locale) | md | safe }}</span>
+            </label>
+            {% endfor %}
+          </div>
+
+        {% elif q.question_type == 'numeric' %}
+          <div class="statements">
+            <input type="number" step="any" data-numeric
+                   value="{{ item.answer.response.get('value') if item.answer.response.get('value') is not none else '' }}"
+                   placeholder="0.00" style="max-width:240px">
+            {% if q.answer_spec and q.answer_spec.get('unit') %}
+              <span class="text-muted">{{ q.answer_spec.get('unit') }}</span>
+            {% endif %}
+          </div>
+
+        {% else %}
+          <div class="statements">
+            <textarea data-text rows="8"
+                      placeholder="…">{{ item.answer.response.get('text') or '' }}</textarea>
+          </div>
+        {% endif %}
+
+        <footer class="exam-footer">
+          <button type="button" class="btn btn-outline" id="nav-prev">← {{ t('survival.previous') }}</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-primary" id="nav-next">{{ t('survival.next') }} →</button>
+        </footer>
+      </article>
+      {% endfor %}
+    </div>
+
+    <aside>
+      <div class="card">
+        <div class="text-small text-muted" style="font-weight:700;text-transform:uppercase;
+             letter-spacing:.04em;margin-bottom:10px">{{ t('survival.questions') }}</div>
+        <div class="qgrid">
+          {% for item in questions %}
+          <button type="button" data-grid-btn
+                  class="{{ 'flagged' if item.answer.flagged_for_review }}"
+                  aria-label="{{ t('survival.question_n', n=item.index, total=questions|length) }}">
+            {{ item.index }}
+          </button>
+          {% endfor %}
+        </div>
+        <hr class="divider" style="margin:16px 0 12px">
+        <div class="legend">
+          <span><i class="answered"></i> {{ t('survival.answered') }}</span>
+          <span><i></i> {{ t('survival.unanswered') }}</span>
+          <span><i class="flagged"></i> {{ t('survival.marked') }}</span>
+        </div>
+      </div>
+
+      <form method="post" action="/survival/attempt/{{ attempt.id }}/submit" id="submit-form"
+            style="margin-top:16px">
+        <button class="btn btn-success btn-block" type="button" onclick="document.getElementById('submit-btn').click()">
+          {{ t('survival.submit') }}
+        </button>
+      </form>
+
+      <p class="text-small text-muted" style="margin-top:12px">
+        <span class="kbd">←</span> <span class="kbd">→</span> {{ t('survival.next') | lower }}
+      </p>
+    </aside>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="submit-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
+    <h2 id="submit-modal-title">{{ t('survival.submit_confirm_title') }}</h2>
+    <p id="submit-unanswered" data-template="{{ t('survival.submit_confirm_body', unanswered='{unanswered}') }}" hidden></p>
+    <p class="text-muted">{{ t('results.pending') if exam.mode != 'practice' }}</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" type="button" data-modal-close>{{ t('common.cancel') }}</button>
+      <button class="btn btn-success" type="button" id="submit-confirm">{{ t('survival.submit') }}</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset('static/js/exam.js') }}" defer></script>
+{% endblock %}

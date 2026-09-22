@@ -1,0 +1,78 @@
+{#
+  Page shell. Every full page extends this; HTMX partials do not.
+#}<!doctype html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{{ t('app.name') }}{% endblock %}</title>
+  <meta name="description" content="{{ t('app.tagline') }}">
+  <meta name="color-scheme" content="light">
+  <link rel="stylesheet" href="{{ asset('static/css/app.css') }}">
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <script src="{{ asset('static/js/fingerprint.js') }}" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+{% block header %}
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">N</span>
+      <span>{{ t('app.name') }}</span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      <a href="/survival" class="{{ 'active' if nav == 'survival' }}">{{ t('nav.survival') }}</a>
+      <a href="/practice" class="{{ 'active' if nav == 'practice' }}">{{ t('nav.practice') }}</a>
+      {% if user and user.is_staff %}
+        <a href="/creative" class="{{ 'active' if nav == 'creative' }}">{{ t('nav.creative') }}</a>
+      {% endif %}
+      <a href="/leaderboard" class="{{ 'active' if nav == 'leaderboard' }}">{{ t('nav.leaderboard') }}</a>
+      {% if user %}
+        <a href="/stats" class="{{ 'active' if nav == 'stats' }}">{{ t('nav.statistics') }}</a>
+      {% endif %}
+      {% if user and user.is_admin %}
+        <a href="/admin" class="{{ 'active' if nav == 'admin' }}">{{ t('nav.admin') }}</a>
+      {% endif %}
+    </nav>
+
+    <span class="spacer"></span>
+
+    <form method="post" action="/auth/locale" class="row" style="gap:4px">
+      <input type="hidden" name="next" value="{{ request.url.path }}">
+      <select name="locale" onchange="this.form.submit()" aria-label="{{ t('common.language') }}"
+              style="width:auto;padding:5px 30px 5px 10px;font-size:14px">
+        {% for loc in locales %}
+          <option value="{{ loc.code }}" {{ 'selected' if loc.code == locale }}>{{ loc.name }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn btn-sm btn-outline" type="submit">OK</button></noscript>
+    </form>
+
+    {% if user %}
+      {% set tier = tier_for(user.rating) %}
+      <a href="/stats" class="row" style="gap:8px;text-decoration:none" title="{{ user.full_name }}">
+        <span class="text-small nowrap" style="color:{{ tier[1] }};font-weight:800">{{ user.rating }}</span>
+        <span class="avatar avatar-sm">{{ user.full_name | initials }}</span>
+      </a>
+      <form method="post" action="/auth/logout" class="inline-form">
+        <button class="btn btn-sm btn-ghost" type="submit">{{ t('nav.logout') }}</button>
+      </form>
+    {% else %}
+      <a class="btn btn-sm btn-ghost" href="/auth/login">{{ t('nav.login') }}</a>
+      <a class="btn btn-sm btn-primary" href="/auth/register">{{ t('nav.register') }}</a>
+    {% endif %}
+  </div>
+</header>
+{% endblock %}
+
+<main id="main">
+  {% block content %}{% endblock %}
+</main>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

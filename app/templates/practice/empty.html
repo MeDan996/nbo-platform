@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ t('common.empty') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page">
+  <div class="card">
+    {{ empty_state(t('common.empty'),
+       (topic.name(locale) if topic else '') ~ ' — ' ~ t('creative.no_questions'),
+       '/practice', t('common.back')) }}
+  </div>
+</div>
+{% endblock %}

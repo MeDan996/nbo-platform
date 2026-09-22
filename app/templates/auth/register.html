@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ t('auth.register.title') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page" style="max-width:500px">
+  <div class="card">
+    <h1 style="font-size:24px">{{ t('auth.register.title') }}</h1>
+    {% for error in errors %}<div class="flash flash-error">{{ t(error) }}</div>{% endfor %}
+    <form method="post" action="/auth/register">
+      <div class="field">
+        <label for="full_name">{{ t('auth.full_name') }}</label>
+        <input id="full_name" name="full_name" required value="{{ values.get('full_name', '') }}">
+      </div>
+      <div class="grid grid-2" style="gap:14px">
+        <div class="field">
+          <label for="email">{{ t('auth.email') }}</label>
+          <input id="email" name="email" type="email" required autocomplete="email"
+                 value="{{ values.get('email', '') }}">
+        </div>
+        <div class="field">
+          <label for="username">{{ t('auth.username') }}</label>
+          <input id="username" name="username" required autocomplete="username"
+                 value="{{ values.get('username', '') }}">
+        </div>
+      </div>
+      <div class="grid grid-2" style="gap:14px">
+        <div class="field">
+          <label for="password">{{ t('auth.password') }}</label>
+          <input id="password" name="password" type="password" required autocomplete="new-password">
+          <div class="field-hint">{{ t('auth.error.password_too_short') }}</div>
+        </div>
+        <div class="field">
+          <label for="password_confirm">{{ t('auth.password_confirm') }}</label>
+          <input id="password_confirm" name="password_confirm" type="password" required
+                 autocomplete="new-password">
+        </div>
+      </div>
+      <div class="grid grid-2" style="gap:14px">
+        <div class="field">
+          <label for="school_id">{{ t('auth.school') }}</label>
+          <select id="school_id" name="school_id">
+            <option value="">{{ t('common.none') }}</option>
+            {% for school in schools %}
+              <option value="{{ school.id }}"
+                {{ 'selected' if values.get('school_id') == school.id | string }}>{{ school.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="grade">{{ t('auth.grade') }}</label>
+          <input id="grade" name="grade" type="number" min="1" max="12"
+                 value="{{ values.get('grade', '') }}">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">{{ t('auth.submit_register') }}</button>
+    </form>
+    <p class="text-small text-muted" style="margin:16px 0 0">
+      This platform records your network address and a browser fingerprint during
+      exams, solely to detect duplicate accounts sitting the same paper.
+    </p>
+    <p class="text-center text-small text-muted" style="margin:10px 0 0">
+      {{ t('auth.have_account') }} <a href="/auth/login">{{ t('nav.login') }}</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

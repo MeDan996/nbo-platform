@@ -1,0 +1,142 @@
+{# Reusable presentation pieces. Imported with `{% from "_macros.html" import ... %}` #}
+
+{% macro stat_tile(value, label, delta=None, color=None) %}
+<div class="stat-tile">
+  <div class="value" {% if color %}style="color:{{ color }}"{% endif %}>{{ value }}</div>
+  <div class="label">{{ label }}</div>
+  {% if delta is not none and delta != 0 %}
+    <div class="delta {{ 'delta-up' if delta > 0 else 'delta-down' }}">
+      {{ '+' if delta > 0 }}{{ delta }}
+    </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+
+{# Accuracy bar with an optional cohort marker behind it. #}
+{% macro accuracy_bar(label, value, cohort=None, color='#1865f2', href=None, count=None) %}
+<div class="bar-row">
+  <div class="bar-label" title="{{ label }}">
+    {% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}{{ label }}{% endif %}
+    {% if count %}<span class="text-muted text-small"> · {{ count }}</span>{% endif %}
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" style="width: {{ (value * 100) | round(1) }}%; background: {{ color }}"></div>
+    {% if cohort is not none %}
+      <div class="bar-marker" style="left: {{ (cohort * 100) | round(1) }}%"
+           title="{{ 'cohort' }} {{ (cohort * 100) | round }}%"></div>
+    {% endif %}
+  </div>
+  <div class="bar-value">{{ (value * 100) | round }}%</div>
+</div>
+{% endmacro %}
+
+
+{% macro progress(fraction, klass='') %}
+<div class="progress {{ klass }}">
+  <span style="width: {{ (fraction * 100) | round(1) }}%"
+        class="{{ 'fill-mastered' if fraction >= 0.9 else 'fill-proficient' if fraction >= 0.7
+                  else 'fill-familiar' if fraction >= 0.5 else 'fill-attempted' }}"></span>
+</div>
+{% endmacro %}
+
+
+{% macro rating_badge(rating, t) %}
+{% set tier = tier_for(rating) %}
+<span class="tier" style="color: {{ tier[1] }}" title="{{ tier[0] }}">{{ rating }}</span>
+{% endmacro %}
+
+
+{% macro user_chip(u, size='') %}
+<a class="row" style="gap:8px;text-decoration:none;color:inherit" href="/u/{{ u.username }}">
+  <span class="avatar {{ 'avatar-sm' if size == 'sm' }}">{{ u.full_name | initials }}</span>
+  <span class="grow" style="min-width:0">
+    <span style="font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.full_name }}</span>
+    {% if size != 'sm' %}<span class="text-small text-muted">@{{ u.username }}</span>{% endif %}
+  </span>
+</a>
+{% endmacro %}
+
+
+{% macro status_badge(status, t) %}
+{% set cls = {'draft':'badge-outline','in_review':'badge-gold','changes_requested':'badge-red',
+              'approved':'badge-green','retired':'badge-outline'} %}
+<span class="badge {{ cls.get(status, '') }}">{{ t('status.' ~ status) }}</span>
+{% endmacro %}
+
+
+{% macro severity_badge(severity, t) %}
+{% set cls = {'info':'badge-outline','low':'badge-blue','medium':'badge-gold',
+              'high':'badge-red','critical':'badge-red'} %}
+<span class="badge {{ cls.get(severity, '') }}">{{ t('severity.' ~ severity) }}</span>
+{% endmacro %}
+
+
+{% macro risk_meter(score) %}
+{% set color = '#0d923f' if score < 20 else '#f5a623' if score < 50 else '#d92916' %}
+<span class="risk-meter" title="risk {{ score }}/100">
+  <span class="track"><span style="width: {{ score }}%; background: {{ color }}"></span></span>
+  <span style="color: {{ color }}">{{ score }}</span>
+</span>
+{% endmacro %}
+
+
+{% macro flash(kind, message) %}
+<div class="flash flash-{{ kind }}">{{ message }}</div>
+{% endmacro %}
+
+
+{% macro empty_state(title, body='', action_href=None, action_label=None) %}
+<div class="empty">
+  <h3>{{ title }}</h3>
+  {% if body %}<p>{{ body }}</p>{% endif %}
+  {% if action_href %}<a class="btn btn-primary" href="{{ action_href }}">{{ action_label }}</a>{% endif %}
+</div>
+{% endmacro %}
+
+
+{# A compact line sparkline from a list of numbers. #}
+{% macro sparkline(values, color='#1865f2', height=72) %}
+{% if values | length == 1 %}
+  {# One contest is not a trend; show the number rather than an empty box. #}
+  <div style="font-size:26px;font-weight:800;color:{{ color }};padding:8px 0">{{ values[0] }}</div>
+{% elif values | length > 1 %}
+  {% set lo = values | min %}
+  {% set hi = values | max %}
+  {% set span = (hi - lo) if (hi - lo) > 0 else 1 %}
+  <svg class="spark" viewBox="0 0 300 {{ height }}" preserveAspectRatio="none" role="img"
+       aria-label="trend">
+    <polyline fill="none" stroke="{{ color }}" stroke-width="2.5" stroke-linejoin="round"
+      points="{% for v in values %}{{ loop.index0 * (300 / (values|length - 1)) }},{{ height - 6 - ((v - lo) / span) * (height - 14) }} {% endfor %}" />
+    {% for v in values %}
+      <circle r="3" fill="{{ color }}"
+              cx="{{ loop.index0 * (300 / (values|length - 1)) }}"
+              cy="{{ height - 6 - ((v - lo) / span) * (height - 14) }}" />
+    {% endfor %}
+  </svg>
+{% endif %}
+{% endmacro %}
+
+
+{% macro activity_calendar(days) %}
+<div class="calendar" role="img" aria-label="activity">
+  {% for day in days %}
+    <div class="day l{{ day.level }}" title="{{ day.date }}: {{ day.count }}"></div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+
+{% macro histogram(buckets, highlight=None) %}
+{% set peak = (buckets | max) if buckets else 1 %}
+<div class="histogram">
+  {% for count in buckets %}
+    <div class="hbar {{ 'is-you' if highlight is not none and loop.index0 == highlight }}"
+         style="height: {{ ((count / peak) * 100) if peak else 0 }}%"
+         title="{{ loop.index0 * 5 }}-{{ loop.index0 * 5 + 5 }}%: {{ count }}"></div>
+  {% endfor %}
+</div>
+<div class="row-between text-small text-muted" style="margin-top:6px">
+  <span>0%</span><span>50%</span><span>100%</span>
+</div>
+{% endmacro %}

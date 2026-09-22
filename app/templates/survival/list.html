@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ t('survival.title') }}{% endblock %}
+
+{% macro exam_card(exam, attempt, t, locale) %}
+<a class="card card-hover" href="/survival/{{ exam.slug }}" style="color:inherit">
+  <div class="row row-wrap" style="gap:6px">
+    {% if exam.is_open_at() %}<span class="badge badge-green badge-dot">{{ t('survival.open_now') }}</span>
+    {% elif exam.opens_at and exam.opens_at > now %}<span class="badge badge-gold">{{ t('survival.upcoming') }}</span>
+    {% else %}<span class="badge badge-outline">{{ t('survival.past') }}</span>{% endif %}
+    {% if exam.is_rated %}<span class="badge badge-purple">{{ t('survival.rated') }}</span>
+    {% else %}<span class="badge badge-outline">{{ t('survival.unrated') }}</span>{% endif %}
+  </div>
+  <h3 style="margin:12px 0 4px">{{ exam.localized_title(locale) }}</h3>
+  {% if exam.subtitle %}<div class="text-small text-muted">{{ exam.subtitle }}</div>{% endif %}
+  <div class="text-small text-muted" style="margin-top:10px">
+    {{ exam.question_count }} {{ t('survival.questions') }} ·
+    {{ exam.total_points | points }} {{ t('survival.points') }} ·
+    {{ exam.duration_minutes }} {{ t('common.minutes') }}
+  </div>
+  {% if attempt %}
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">
+      {% if attempt.status == 'in_progress' %}
+        <span class="badge badge-gold">{{ t('survival.resume') }}</span>
+      {% elif exam.results_released() %}
+        <span class="badge badge-blue">{{ attempt.raw_score | points }} / {{ attempt.max_score | points }}</span>
+        {% if attempt.rank %}<span class="badge badge-outline">#{{ attempt.rank }}</span>{% endif %}
+      {% else %}
+        <span class="badge badge-outline">{{ t('results.pending') }}</span>
+      {% endif %}
+    </div>
+  {% endif %}
+</a>
+{% endmacro %}
+
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('survival.title') }}</h1>
+  <p class="text-muted">{{ t('survival.subtitle') }}</p>
+
+  {% for label, group in [(t('survival.open_now'), open_exams),
+                          (t('survival.upcoming'), upcoming),
+                          (t('survival.past'), past)] %}
+    {% if group %}
+      <h2 style="margin-top:30px;font-size:20px">{{ label }}</h2>
+      <div class="grid grid-3">
+        {% for exam in group %}{{ exam_card(exam, my_attempts.get(exam.id), t, locale) }}{% endfor %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {% if not open_exams and not upcoming and not past %}
+    {{ empty_state(t('common.empty'), '', '/practice', t('nav.practice')) }}
+  {% endif %}
+</div>
+{% endblock %}

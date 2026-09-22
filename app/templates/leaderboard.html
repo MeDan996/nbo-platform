@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import user_chip, rating_badge, empty_state %}
+{% block title %}{{ t('nav.leaderboard') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <div class="row-between row-wrap">
+    <h1>{{ t('nav.leaderboard') }}</h1>
+    <form method="get" class="row">
+      <select name="school_id" onchange="this.form.submit()" style="width:auto">
+        <option value="">{{ t('common.all') }}</option>
+        {% for school in schools %}
+          <option value="{{ school.id }}" {{ 'selected' if school_id == school.id }}>{{ school.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% if my_position %}
+    <div class="flash flash-info">{{ t('results.rank') }}: #{{ my_position }}</div>
+  {% endif %}
+
+  <div class="card card-flush">
+    {% if users %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th style="width:60px">#</th><th>{{ t('auth.full_name') }}</th>
+          <th>{{ t('auth.school') }}</th>
+          <th class="num">{{ t('stats.rating') }}</th>
+          <th class="num">{{ t('stats.peak_rating') }}</th>
+          <th class="num">{{ t('survival.rated') }}</th>
+        </tr></thead>
+        <tbody>
+        {% for row in users %}
+          <tr {% if user and row.id == user.id %}style="background:var(--blue-light)"{% endif %}>
+            <td><b>{{ loop.index }}</b></td>
+            <td>{{ user_chip(row, 'sm') }}</td>
+            <td class="text-small text-muted">{{ row.school.name if row.school else '—' }}</td>
+            <td class="num">{{ rating_badge(row.rating, t) }}</td>
+            <td class="num text-muted">{{ row.peak_rating }}</td>
+            <td class="num text-muted">{{ row.rated_contests }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      {{ empty_state(t('common.empty')) }}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

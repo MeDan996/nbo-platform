@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import severity_badge, risk_meter, empty_state %}
+{% block title %}{{ t('admin.integrity') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('admin.integrity') }}</h1>
+
+  <form method="get" class="row row-wrap card" style="margin:16px 0;align-items:flex-end">
+    <div class="field" style="margin:0"><label for="status">status</label>
+      <select id="status" name="status" onchange="this.form.submit()">
+        <option value="all" {{ 'selected' if status == 'all' }}>{{ t('common.all') }}</option>
+        {% for s in statuses %}<option value="{{ s.value }}" {{ 'selected' if status == s.value }}>{{ s.value }}</option>{% endfor %}
+      </select></div>
+    <div class="field" style="margin:0"><label for="exam_id">{{ t('nav.exams') }}</label>
+      <select id="exam_id" name="exam_id" onchange="this.form.submit()">
+        <option value="">{{ t('common.all') }}</option>
+        {% for exam in exams %}<option value="{{ exam.id }}" {{ 'selected' if exam_id == exam.id }}>{{ exam.title }}</option>{% endfor %}
+      </select></div>
+  </form>
+
+  <div class="card card-flush">
+    {% if flags %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('admin.severity') }}</th><th>{{ t('admin.flag') }}</th>
+          <th>{{ t('auth.username') }}</th><th>{{ t('admin.related_participant') }}</th>
+          <th class="num">{{ t('admin.risk_score') }}</th><th></th></tr></thead>
+        <tbody>
+        {% for flag in flags %}
+          <tr>
+            <td>{{ severity_badge(flag.severity, t) }}</td>
+            <td><b>{{ t('rule.' ~ flag.rule) }}</b>
+              <div class="text-small text-muted mono">
+                {% for key, value in (flag.details or {}).items() %}{{ key }}={{ value }} {% endfor %}
+              </div></td>
+            <td class="text-small">{{ flag.user.username if flag.user else '—' }}</td>
+            <td class="text-small">
+              {% if flag.related_user %}<a href="/u/{{ flag.related_user.username }}">{{ flag.related_user.username }}</a>
+              {% else %}—{% endif %}</td>
+            <td class="num">
+              {% set attempt = attempts.get(flag.attempt_id) %}
+              {% if attempt %}{{ risk_meter(attempt.risk_score) }}{% endif %}</td>
+            <td class="text-right nowrap">
+              {% if flag.status == 'open' %}
+              <form method="post" action="/admin/flags/{{ flag.id }}/resolve" class="inline-form">
+                <button class="btn btn-sm btn-danger" name="decision" value="confirmed">{{ t('admin.confirm_flag') }}</button>
+              </form>
+              <form method="post" action="/admin/flags/{{ flag.id }}/resolve" class="inline-form">
+                <button class="btn btn-sm btn-outline" name="decision" value="dismissed">{{ t('admin.dismiss_flag') }}</button>
+              </form>
+              {% else %}
+                <span class="badge badge-outline">{{ flag.status }}</span>
+              {% endif %}
+              {% if flag.attempt_id %}
+                <a class="btn btn-sm btn-ghost" href="/admin/attempt/{{ flag.attempt_id }}">→</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty_state(t('admin.no_flags')) }}{% endif %}
+  </div>
+</div>
+{% endblock %}

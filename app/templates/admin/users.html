@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import user_chip, rating_badge %}
+{% block title %}{{ t('admin.users') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('admin.users') }}</h1>
+  <form method="get" class="row card" style="margin:16px 0">
+    <input name="q" value="{{ q }}" placeholder="{{ t('common.search') }}" class="grow">
+    <button class="btn btn-outline" type="submit">{{ t('common.search') }}</button>
+  </form>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('auth.full_name') }}</th><th>{{ t('auth.email') }}</th>
+          <th>{{ t('auth.school') }}</th><th class="num">{{ t('stats.rating') }}</th>
+          <th>role</th><th></th></tr></thead>
+        <tbody>
+        {% for row in users %}
+          <tr>
+            <td>{{ user_chip(row, 'sm') }}
+              {% if row.is_banned %}<span class="badge badge-red">banned</span>{% endif %}</td>
+            <td class="text-small mono">{{ row.email }}</td>
+            <td class="text-small">{{ row.school.name if row.school else '—' }}</td>
+            <td class="num">{{ rating_badge(row.rating, t) }}</td>
+            <td><span class="badge badge-outline">{{ row.role }}</span></td>
+            <td class="text-right nowrap">
+              <form method="post" action="/admin/users/{{ row.id }}" class="row inline-form">
+                <select name="role" style="width:auto">
+                  {% for r in roles %}<option value="{{ r.value }}" {{ 'selected' if row.role == r.value }}>{{ r.value }}</option>{% endfor %}
+                </select>
+                <button class="btn btn-sm btn-outline" name="action" value="set_role">{{ t('common.save') }}</button>
+                {% if row.is_banned %}
+                  <button class="btn btn-sm btn-success" name="action" value="unban">unban</button>
+                {% else %}
+                  <button class="btn btn-sm btn-danger" name="action" value="ban">ban</button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ exam.title }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/creative/exams">← {{ t('nav.exams') }}</a>
+  <div class="row-between row-wrap" style="margin:12px 0 18px">
+    <div>
+      <h1 style="margin-bottom:4px">{{ exam.title }}</h1>
+      <div class="row" style="gap:6px">
+        <span class="badge badge-outline mono">{{ exam.slug }}</span>
+        <span class="badge badge-outline">{{ exam.status }}</span>
+        {% if exam.is_rated %}<span class="badge badge-purple">{{ t('survival.rated') }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="row">
+      <a class="btn btn-outline" href="/survival/{{ exam.slug }}">{{ t('creative.preview') }}</a>
+      <form method="post" action="/creative/exams/{{ exam.id }}/publish" class="inline-form">
+        <button class="btn btn-success" type="submit"
+                {{ 'disabled' if not exam.questions }}>{{ t('creative.publish') }}</button>
+      </form>
+      <button class="btn btn-primary" form="exam-form" type="submit">{{ t('common.save') }}</button>
+    </div>
+  </div>
+
+  {% if request.query_params.get('saved') %}<div class="flash flash-success">{{ t('common.save') }} ✓</div>{% endif %}
+
+  <form method="post" action="/creative/exams/{{ exam.id }}" id="exam-form">
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      <div class="card">
+        <h2 style="font-size:18px">{{ t('creative.exam_title') }}</h2>
+        <div class="field"><label for="title">{{ t('creative.exam_title') }}</label>
+          <input id="title" name="title" value="{{ exam.title }}" required></div>
+        <div class="field"><label for="subtitle">subtitle</label>
+          <input id="subtitle" name="subtitle" value="{{ exam.subtitle or '' }}"></div>
+        <div class="grid grid-3" style="gap:10px">
+          {% for loc in settings.locales %}
+          <div class="field"><label for="title__{{ loc }}">{{ loc | upper }}</label>
+            <input id="title__{{ loc }}" name="title__{{ loc }}"
+                   value="{{ (exam.title_i18n or {}).get(loc, '') }}"></div>
+          {% endfor %}
+        </div>
+        <div class="field" style="margin-bottom:0"><label for="description">{{ t('survival.instructions') }}</label>
+          <textarea id="description" name="description" rows="4">{{ exam.description or '' }}</textarea></div>
+      </div>
+
+      <div class="card" id="questions">
+        <div class="row-between" style="margin-bottom:12px">
+          <h2 style="font-size:18px;margin:0">{{ t('survival.questions') }}
+            <span class="text-muted text-small">({{ exam.questions | length }} ·
+              {{ exam.total_points | points }} {{ t('survival.points') | lower }})</span></h2>
+        </div>
+        {% if exam.questions %}
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>#</th><th>{{ t('creative.stem') }}</th><th>{{ t('creative.topic') }}</th>
+              <th class="num">{{ t('survival.points') }}</th><th></th></tr></thead>
+            <tbody>
+            {% for eq in exam.questions %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><a href="/creative/questions/{{ eq.question_id }}">
+                  {{ (eq.question.tr(locale).stem if eq.question.tr(locale) else '') | excerpt(90) }}</a></td>
+                <td class="text-small">{{ eq.question.topic.name(locale) if eq.question.topic else '—' }}</td>
+                <td class="num">{{ eq.points | points }}</td>
+                <td class="text-right">
+                  <button class="btn btn-sm btn-ghost" type="submit" formnovalidate
+                          formaction="/creative/exams/{{ exam.id }}/questions/{{ eq.id }}/remove">×</button>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}{{ empty_state(t('creative.add_questions')) }}{% endif %}
+      </div>
+    </div>
+
+    <aside class="stack">
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('admin.severity') }}</h3>
+        <div class="field"><label for="mode">mode</label>
+          <select id="mode" name="mode">
+            {% for m in modes %}<option value="{{ m.value }}" {{ 'selected' if exam.mode == m.value }}>{{ m.value }}</option>{% endfor %}
+          </select></div>
+        <div class="field"><label for="status">status</label>
+          <select id="status" name="status">
+            {% for s in statuses %}<option value="{{ s.value }}" {{ 'selected' if exam.status == s.value }}>{{ s.value }}</option>{% endfor %}
+          </select></div>
+        <div class="grid grid-2" style="gap:10px">
+          <div class="field"><label for="duration_minutes">{{ t('survival.duration') }}</label>
+            <input id="duration_minutes" name="duration_minutes" type="number" min="1"
+                   value="{{ exam.duration_minutes }}"></div>
+          <div class="field"><label for="max_attempts">{{ t('survival.attempts_left') }}</label>
+            <input id="max_attempts" name="max_attempts" type="number" min="1"
+                   value="{{ exam.max_attempts }}"></div>
+        </div>
+        {% for field, label in [('opens_at', t('survival.opens_at')), ('closes_at', t('survival.closes_at')),
+                                ('results_visible_at', t('admin.publish_results'))] %}
+        <div class="field"><label for="{{ field }}">{{ label }}</label>
+          <input id="{{ field }}" name="{{ field }}" type="datetime-local"
+                 value="{{ (exam[field] | dt('%Y-%m-%dT%H:%M')) if exam[field] else '' }}"></div>
+        {% endfor %}
+        {% for field, label in [('is_rated', t('survival.rated')),
+                                ('shuffle_questions', 'shuffle questions'),
+                                ('shuffle_statements', 'shuffle statements'),
+                                ('show_feedback_immediately', 'instant feedback'),
+                                ('registration_required', t('denied.registration_required'))] %}
+        <div class="checkbox" style="margin-bottom:8px">
+          <input type="checkbox" id="{{ field }}" name="{{ field }}" {{ 'checked' if exam[field] }}>
+          <label for="{{ field }}">{{ label }}</label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('admin.integrity') }}</h3>
+        {% for key, label in [('block_duplicate_ip', t('rule.duplicate_ip')),
+                              ('block_duplicate_device', t('rule.duplicate_device')),
+                              ('detect_collusion', t('rule.answer_similarity')),
+                              ('track_focus_loss', t('rule.excessive_focus_loss')),
+                              ('block_copy_paste', t('rule.paste_detected')),
+                              ('require_fullscreen', t('rule.fullscreen_exit'))] %}
+        <div class="checkbox" style="margin-bottom:8px">
+          <input type="checkbox" id="policy__{{ key }}" name="policy__{{ key }}"
+                 {{ 'checked' if exam.policy(key) }}>
+          <label for="policy__{{ key }}">{{ label }}</label>
+        </div>
+        {% endfor %}
+        <div class="grid grid-2" style="gap:10px;margin-top:10px">
+          <div class="field" style="margin:0">
+            <label for="policy__ip_account_threshold">accounts/IP</label>
+            <input id="policy__ip_account_threshold" name="policy__ip_account_threshold"
+                   type="number" min="1" value="{{ exam.policy('ip_account_threshold') }}"></div>
+          <div class="field" style="margin:0">
+            <label for="policy__max_focus_losses">focus losses</label>
+            <input id="policy__max_focus_losses" name="policy__max_focus_losses"
+                   type="number" min="0" value="{{ exam.policy('max_focus_losses') }}"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+  </form>
+
+  <div class="card" style="margin-top:18px">
+    <h2 style="font-size:18px">{{ t('creative.add_questions') }}</h2>
+    <div class="table-wrap" style="max-height:440px;overflow-y:auto">
+      <table class="data">
+        <tbody>
+        {% for question in available %}
+          <tr>
+            <td><a href="/creative/questions/{{ question.id }}">
+              {{ (question.tr(locale).stem if question.tr(locale) else '') | excerpt(100) }}</a>
+              {% if question.is_official_ibo %}<span class="badge badge-purple">IBO</span>{% endif %}</td>
+            <td class="text-small">{{ question.topic.name(locale) if question.topic else '—' }}</td>
+            <td class="text-small">{{ t('difficulty.' ~ question.difficulty) }}</td>
+            <td class="text-right">
+              <form method="post" action="/creative/exams/{{ exam.id }}/questions/add" class="row inline-form">
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                <input name="points" type="number" step="0.1" min="0.1"
+                       value="{{ question.max_points }}" style="width:70px">
+                <button class="btn btn-sm btn-outline" type="submit">+</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr><td class="text-muted">{{ t('creative.no_questions') }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, accuracy_bar, activity_calendar, rating_badge %}
+{% block title %}{{ profile_user.full_name }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <div class="card">
+    <div class="row row-wrap" style="gap:20px">
+      <span class="avatar avatar-lg">{{ profile_user.full_name | initials }}</span>
+      <div class="grow">
+        <h1 style="margin-bottom:2px">{{ profile_user.full_name }}</h1>
+        <div class="text-muted">@{{ profile_user.username }}
+          {% if profile_user.school %} · {{ profile_user.school.name }}{% endif %}
+          {% if profile_user.grade %} · {{ t('auth.grade') }} {{ profile_user.grade }}{% endif %}
+        </div>
+        <div style="margin-top:8px">
+          <span class="badge badge-blue">{{ tier_for(profile_user.rating)[0] }}</span>
+          {{ rating_badge(profile_user.rating, t) }}
+        </div>
+      </div>
+      {% if is_self %}<a class="btn btn-outline" href="/stats">{{ t('nav.statistics') }}</a>{% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-4" style="margin:20px 0">
+    {{ stat_tile(summary.rating, t('stats.rating'), none, tier_for(summary.rating)[1]) }}
+    {{ stat_tile((summary.accuracy * 100) | round | int ~ '%', t('stats.accuracy')) }}
+    {{ stat_tile(summary.attempts, t('landing.stat.attempts')) }}
+    {{ stat_tile(summary.streak_days, t('stats.streak')) }}
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h2 style="font-size:19px">{{ t('stats.by_topic') }}</h2>
+      <div class="bars">
+        {% for row in insights %}
+          {{ accuracy_bar(row.name, row.accuracy, row.cohort_accuracy, row.color, none, row.statements_seen) }}
+        {% else %}
+          <p class="text-muted">{{ t('stats.not_enough_data') }}</p>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:19px">{{ t('stats.activity') }}</h2>
+      {{ activity_calendar(calendar) }}
+    </div>
+  </div>
+</div>
+{% endblock %}

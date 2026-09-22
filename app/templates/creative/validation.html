@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ t('common.error') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page">
+  <div class="card">
+    <h1 style="font-size:22px">{{ t('common.error') }}</h1>
+    <ul>{% for problem in problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+    <a class="btn btn-primary" href="/creative/questions/{{ question.id }}">{{ t('common.back') }}</a>
+  </div>
+</div>
+{% endblock %}

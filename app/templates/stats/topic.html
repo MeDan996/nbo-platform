@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, progress, empty_state %}
+{% block title %}{{ topic_name }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/stats">← {{ t('stats.title') }}</a>
+  <h1 style="margin-top:12px">
+    <span style="display:inline-block;width:14px;height:14px;border-radius:50%;
+                 background:{{ topic.color }};margin-right:8px"></span>{{ topic_name }}
+  </h1>
+
+  {% if mastery %}
+  <div class="grid grid-4" style="margin:20px 0">
+    {{ stat_tile((mastery.accuracy * 100) | round | int ~ '%', t('stats.accuracy')) }}
+    {{ stat_tile((mastery.recent_accuracy * 100) | round | int ~ '%',
+                 t('stats.trend_up') if mastery.recent_accuracy >= mastery.accuracy else t('stats.trend_down')) }}
+    {{ stat_tile(mastery.questions_seen, t('stats.questions_answered')) }}
+    {{ stat_tile(mastery.avg_seconds | round | int ~ 's', t('stats.avg_time')) }}
+  </div>
+
+  {% if cohort is not none %}
+  <div class="card" style="margin-bottom:20px">
+    <div class="row-between" style="margin-bottom:8px">
+      <b>{{ t('results.you') }}</b><b>{{ (mastery.accuracy * 100) | round | int }}%</b>
+    </div>
+    {{ progress(mastery.accuracy) }}
+    <div class="row-between" style="margin:14px 0 8px">
+      <span class="text-muted">{{ t('results.cohort_average') }}</span>
+      <span class="text-muted">{{ (cohort * 100) | round | int }}%</span>
+    </div>
+    {{ progress(cohort) }}
+  </div>
+  {% endif %}
+  {% else %}
+    <div class="card">{{ empty_state(t('stats.not_enough_data'), '', '/practice', t('nav.practice')) }}</div>
+  {% endif %}
+
+  <form method="post" action="/practice/start" style="margin-bottom:20px">
+    <input type="hidden" name="topic_slug" value="{{ topic.slug }}">
+    <input type="hidden" name="count" value="10">
+    <button class="btn btn-primary" type="submit">{{ t('landing.cta.start') }} — {{ topic_name }}</button>
+  </form>
+
+  {% if rows %}
+  <div class="card card-flush">
+    <div class="card-head"><h2 style="font-size:18px">{{ t('stats.review_these') }}</h2></div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('creative.stem') }}</th><th class="num">{{ t('stats.accuracy') }}</th>
+          <th class="num">{{ t('survival.points') }}</th><th class="num">{{ t('stats.avg_time') }}</th><th></th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ (row.question.tr(locale).stem if row.question.tr(locale) else '') | excerpt(110) }}</td>
+            <td class="num"><b class="{{ 'delta-up' if row.correct == row.total else 'delta-down' }}">
+              {{ row.correct }}/{{ row.total }}</b></td>
+            <td class="num">{{ row.points | points }} / {{ row.max_points | points }}</td>
+            <td class="num text-muted">{{ row.seconds }}s</td>
+            <td class="text-right">
+              <a class="btn btn-sm btn-outline"
+                 href="/survival/attempt/{{ row.attempt.id }}/result">{{ t('survival.review') }}</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

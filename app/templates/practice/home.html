@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% from "_macros.html" import progress, empty_state %}
+{% block title %}{{ t('nav.practice') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('nav.practice') }}</h1>
+  <p class="text-muted">{{ t('landing.feature.stats.body') }}</p>
+
+  <form method="post" action="/practice/start" class="card" style="margin-bottom:24px">
+    <div class="row row-wrap" style="align-items:flex-end">
+      <div class="field grow" style="margin:0;min-width:200px">
+        <label for="count">{{ t('survival.questions') }}</label>
+        <select id="count" name="count">
+          {% for size in set_sizes %}<option value="{{ size }}" {{ 'selected' if size == 10 }}>{{ size }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-lg" type="submit">{{ t('landing.cta.start') }} — {{ t('common.all') }}</button>
+    </div>
+  </form>
+
+  <h2 style="font-size:20px">{{ t('creative.topic') }}</h2>
+  <div class="grid grid-3">
+    {% for topic in topics %}
+    {% set row = mastery.get(topic.id) %}
+    <div class="card card-hover">
+      <div class="row" style="gap:10px;margin-bottom:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:{{ topic.color }};flex:none"></span>
+        <b class="grow">{{ topic.name(locale) }}</b>
+      </div>
+      <div class="text-small text-muted" style="margin-bottom:8px">
+        {{ counts.get(topic.id, 0) }} {{ t('survival.questions') | lower }}
+      </div>
+      {% if row and row.statements_seen %}
+        {{ progress(row.accuracy) }}
+        <div class="text-small text-muted" style="margin-top:6px">
+          {{ (row.accuracy * 100) | round | int }}% · {{ row.statements_seen }}
+        </div>
+      {% else %}
+        {{ progress(0) }}
+        <div class="text-small text-muted" style="margin-top:6px">{{ t('stats.not_enough_data') }}</div>
+      {% endif %}
+      <form method="post" action="/practice/start" style="margin-top:12px">
+        <input type="hidden" name="topic_slug" value="{{ topic.slug }}">
+        <input type="hidden" name="count" value="10">
+        <button class="btn btn-sm btn-outline btn-block" type="submit"
+                {{ 'disabled' if not counts.get(topic.id) }}>
+          {{ t('landing.cta.start') }}
+        </button>
+      </form>
+    </div>
+    {% else %}
+      {{ empty_state(t('common.empty')) }}
+    {% endfor %}
+  </div>
+
+  {% if recent %}
+  <h2 style="margin-top:32px;font-size:20px">{{ t('landing.stat.attempts') }}</h2>
+  <div class="card card-flush">
+    <table class="data">
+      <tbody>
+      {% for attempt in recent %}
+        <tr>
+          <td>{{ attempt.exam.title if attempt.exam else '—' }}</td>
+          <td class="text-small text-muted">{{ attempt.submitted_at | dt if attempt.submitted_at else '—' }}</td>
+          <td class="num">{{ attempt.raw_score | points }} / {{ attempt.max_score | points }}</td>
+          <td class="text-right">
+            <a class="btn btn-sm btn-outline"
+               href="/survival/attempt/{{ attempt.id }}{{ '' if attempt.status == 'in_progress' else '/result' }}">
+              {{ t('survival.resume') if attempt.status == 'in_progress' else t('survival.review') }}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

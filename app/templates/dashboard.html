@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, accuracy_bar, activity_calendar, empty_state %}
+{% block title %}{{ t('nav.dashboard') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ user.full_name.split()[0] }} 👋</h1>
+
+  <div class="grid grid-4" style="margin-bottom:26px">
+    {{ stat_tile(summary.rating, t('stats.rating'), summary.rating - 1200 if summary.rated_attempts else none,
+                 tier_for(summary.rating)[1]) }}
+    {{ stat_tile((summary.accuracy * 100) | round | int ~ '%', t('stats.accuracy')) }}
+    {{ stat_tile(summary.questions_answered, t('stats.questions_answered')) }}
+    {{ stat_tile(summary.streak_days, t('stats.streak')) }}
+  </div>
+
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      {% if open_exams %}
+      <div class="card card-accent">
+        <h2 style="font-size:19px">{{ t('survival.open_now') }}</h2>
+        {% for exam in open_exams %}
+        <div class="row-between" style="padding:12px 0;border-top:1px solid var(--line)">
+          <div class="grow">
+            <a href="/survival/{{ exam.slug }}" style="font-weight:700">{{ exam.localized_title(locale) }}</a>
+            <div class="text-small text-muted">
+              {{ exam.question_count }} {{ t('survival.questions') }} ·
+              {{ exam.duration_minutes }} {{ t('common.minutes') }}
+              {% if exam.closes_at %} · {{ t('survival.closes_at') }} {{ exam.closes_at | since }}{% endif %}
+            </div>
+          </div>
+          <a class="btn btn-sm btn-primary" href="/survival/{{ exam.slug }}">{{ t('survival.start') }}</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <div class="row-between" style="margin-bottom:14px">
+          <h2 style="font-size:19px;margin:0">{{ t('stats.by_topic') }}</h2>
+          <a class="text-small" href="/stats">{{ t('nav.statistics') }} →</a>
+        </div>
+        {% if insights %}
+          <div class="bars">
+            {% for row in insights %}
+              {{ accuracy_bar(row.name, row.accuracy, row.cohort_accuracy, row.color,
+                              '/stats/topic/' ~ row.slug, row.statements_seen) }}
+            {% endfor %}
+          </div>
+          <p class="text-small text-muted" style="margin:14px 0 0">
+            ▏{{ t('results.cohort_average') }}
+          </p>
+        {% else %}
+          {{ empty_state(t('stats.not_enough_data'), '', '/practice', t('nav.practice')) }}
+        {% endif %}
+      </div>
+
+      {% if weakest %}
+      <div class="card">
+        <h2 style="font-size:19px">{{ t('stats.weaknesses') }}</h2>
+        <div class="grid grid-3">
+          {% for row in weakest %}
+          <a class="panel" href="/stats/topic/{{ row.slug }}" style="color:inherit;text-decoration:none">
+            <div style="font-weight:700">{{ row.name }}</div>
+            <div class="text-small text-muted">{{ (row.accuracy * 100) | round | int }}%
+              {% if row.delta is not none %}
+                <span class="{{ 'delta-down' if row.delta < 0 else 'delta-up' }}">
+                  ({{ '%+.0f' | format(row.delta * 100) }} {{ t('stats.vs_cohort') }})
+                </span>
+              {% endif %}
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="stack">
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('nav.practice') }}</h3>
+        <p class="text-small text-muted">{{ t('landing.feature.stats.body') }}</p>
+        <a class="btn btn-primary btn-block" href="/practice">{{ t('landing.cta.start') }}</a>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('stats.activity') }}</h3>
+        {{ activity_calendar(calendar) }}
+      </div>
+
+      {% if upcoming %}
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('survival.upcoming') }}</h3>
+        {% for exam in upcoming %}
+        <div style="padding:8px 0;border-top:1px solid var(--line)">
+          <a href="/survival/{{ exam.slug }}" class="text-small" style="font-weight:600">
+            {{ exam.localized_title(locale) }}</a>
+          <div class="text-small text-muted">{{ exam.opens_at | since }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}

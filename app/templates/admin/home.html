@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, severity_badge %}
+{% block title %}{{ t('admin.title') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('admin.title') }}</h1>
+
+  <div class="grid grid-4" style="margin:20px 0">
+    {{ stat_tile(open_flags, t('admin.flags'), none, '#f5a623' if open_flags else none) }}
+    {{ stat_tile(critical_flags, t('severity.critical'), none, '#d92916' if critical_flags else none) }}
+    {{ stat_tile(live_attempts, t('landing.stat.attempts')) }}
+    {{ stat_tile(users, t('admin.users')) }}
+  </div>
+
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      <div class="card card-flush">
+        <div class="card-head">
+          <h2 style="font-size:18px">{{ t('admin.review_queue') }}</h2>
+          <a class="text-small" href="/admin/integrity">{{ t('common.all') }} →</a>
+        </div>
+        {% if recent_flags %}
+        <table class="data">
+          <tbody>
+          {% for flag in recent_flags %}
+            <tr>
+              <td>{{ severity_badge(flag.severity, t) }}</td>
+              <td><b>{{ t('rule.' ~ flag.rule) }}</b>
+                <div class="text-small text-muted">{{ flag.user.username if flag.user else '—' }}</div></td>
+              <td class="text-right">
+                {% if flag.attempt_id %}
+                  <a class="btn btn-sm btn-outline" href="/admin/attempt/{{ flag.attempt_id }}">→</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<div class="empty">{{ t('admin.no_flags') }}</div>{% endif %}
+      </div>
+
+      <div class="card card-flush">
+        <div class="card-head"><h2 style="font-size:18px">{{ t('nav.exams') }}</h2></div>
+        <table class="data">
+          <tbody>
+          {% for exam in exams %}
+            <tr>
+              <td><a href="/survival/{{ exam.slug }}/standings">{{ exam.title }}</a>
+                <div class="text-small text-muted">{{ exam.status }} ·
+                  {{ exam.question_count }} {{ t('survival.questions') | lower }}</div></td>
+              <td class="text-right nowrap">
+                <a class="btn btn-sm btn-outline" href="/admin/exams/{{ exam.id }}/analysis">analysis</a>
+                <form method="post" action="/admin/exams/{{ exam.id }}/finalise" class="inline-form">
+                  <button class="btn btn-sm btn-primary" type="submit">{{ t('admin.recompute') }}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a href="/admin/integrity">{{ t('admin.integrity') }}
+          {% if open_flags %}<span class="badge badge-gold">{{ open_flags }}</span>{% endif %}</a>
+        <a href="/admin/denials">{{ t('admin.denials') }}<span class="badge badge-outline">{{ denials }}</span></a>
+        <a href="/admin/networks">networks</a>
+        <a href="/admin/users">{{ t('admin.users') }}</a>
+        <a href="/admin/schools">{{ t('admin.schools') }}<span class="badge badge-outline">{{ schools }}</span></a>
+      </nav>
+    </aside>
+  </div>
+</div>
+{% endblock %}

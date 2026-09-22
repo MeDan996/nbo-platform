@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "_macros.html" import severity_badge, risk_meter, user_chip %}
+{% block title %}attempt #{{ attempt.id }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/admin/integrity">← {{ t('admin.integrity') }}</a>
+  <div class="row-between row-wrap" style="margin:12px 0 18px">
+    <div>
+      <h1 style="margin-bottom:4px">attempt #{{ attempt.id }}</h1>
+      <div class="row" style="gap:8px">
+        {{ user_chip(attempt.user, 'sm') }}
+        <span class="badge badge-outline">{{ attempt.status }}</span>
+        {{ risk_meter(attempt.risk_score) }}
+      </div>
+    </div>
+    <div class="row">
+      {% if attempt.status == 'voided' %}
+        <form method="post" action="/admin/attempts/{{ attempt.id }}/restore" class="inline-form">
+          <button class="btn btn-outline" type="submit">restore</button></form>
+      {% else %}
+        <form method="post" action="/admin/attempts/{{ attempt.id }}/void" class="row inline-form">
+          <input name="reason" placeholder="{{ t('admin.reason') }}" required style="width:auto">
+          <button class="btn btn-danger" type="submit">{{ t('admin.void_attempt') }}</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-bottom:18px">
+    <div class="card">
+      <h3 style="font-size:16px">session</h3>
+      <table class="data"><tbody>
+        <tr><td>exam</td><td><a href="/survival/{{ attempt.exam.slug }}/standings">{{ attempt.exam.title }}</a></td></tr>
+        <tr><td>score</td><td><b>{{ attempt.raw_score | points }}</b> / {{ attempt.max_score | points }}
+          ({{ attempt.percent | round | int }}%)</td></tr>
+        <tr><td>rank</td><td>{{ attempt.rank or '—' }}</td></tr>
+        <tr><td>started</td><td class="mono">{{ attempt.started_at | dt('%Y-%m-%d %H:%M:%S') }}</td></tr>
+        <tr><td>submitted</td><td class="mono">{{ attempt.submitted_at | dt('%Y-%m-%d %H:%M:%S') }}</td></tr>
+        <tr><td>ip</td><td class="mono">{{ attempt.ip_address }}</td></tr>
+        <tr><td>seen ips</td><td class="mono text-small">{{ (attempt.seen_ips or []) | join(', ') }}</td></tr>
+        <tr><td>device</td><td class="mono text-small">{{ attempt.device_fingerprint or '—' }}</td></tr>
+        <tr><td>focus losses</td><td>{{ attempt.focus_losses }}</td></tr>
+        <tr><td>user agent</td><td class="text-small mono">{{ attempt.user_agent or '—' }}</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:16px">{{ t('admin.flags') }}</h3>
+      {% for flag in flags %}
+      <div class="panel" style="margin-bottom:10px">
+        <div class="row-between">
+          <b>{{ t('rule.' ~ flag.rule) }}</b>
+          {{ severity_badge(flag.severity, t) }}
+        </div>
+        <div class="text-small mono text-muted">
+          {% for key, value in (flag.details or {}).items() %}{{ key }}={{ value }} {% endfor %}
+        </div>
+        {% if flag.related_user_id and related_users.get(flag.related_user_id) %}
+          <div class="text-small">↔ <a href="/u/{{ related_users[flag.related_user_id].username }}">
+            {{ related_users[flag.related_user_id].username }}</a></div>
+        {% endif %}
+        {% if flag.status == 'open' %}
+        <div class="row" style="margin-top:8px">
+          <form method="post" action="/admin/flags/{{ flag.id }}/resolve" class="row inline-form grow">
+            <input name="note" placeholder="{{ t('admin.reason') }}" style="width:auto" class="grow">
+            <button class="btn btn-sm btn-danger" name="decision" value="confirmed">{{ t('admin.confirm_flag') }}</button>
+            <button class="btn btn-sm btn-outline" name="decision" value="dismissed">{{ t('admin.dismiss_flag') }}</button>
+          </form>
+        </div>
+        {% else %}
+          <span class="badge badge-outline">{{ flag.status }}</span>
+          {% if flag.resolution_note %}<span class="text-small">{{ flag.resolution_note }}</span>{% endif %}
+        {% endif %}
+      </div>
+      {% else %}
+        <p class="text-muted">{{ t('admin.no_flags') }}</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if same_ip or same_device %}
+  <div class="card" style="margin-bottom:18px">
+    <h3 style="font-size:16px">overlapping sittings</h3>
+    <table class="data"><tbody>
+      {% for other in same_device %}
+        <tr><td><span class="badge badge-red">same device</span></td>
+          <td>{{ user_chip(other.user, 'sm') }}</td>
+          <td class="num">{{ other.raw_score | points }}</td>
+          <td class="text-right"><a class="btn btn-sm btn-outline" href="/admin/attempt/{{ other.id }}">→</a></td></tr>
+      {% endfor %}
+      {% for other in same_ip %}
+        <tr><td><span class="badge badge-gold">same IP</span></td>
+          <td>{{ user_chip(other.user, 'sm') }}</td>
+          <td class="num">{{ other.raw_score | points }}</td>
+          <td class="text-right"><a class="btn btn-sm btn-outline" href="/admin/attempt/{{ other.id }}">→</a></td></tr>
+      {% endfor %}
+    </tbody></table>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-2">
+    <div class="card card-flush">
+      <div class="card-head"><h3 style="font-size:16px;margin:0">telemetry</h3></div>
+      <div class="table-wrap" style="max-height:380px;overflow-y:auto">
+        <table class="data"><tbody>
+        {% for event in events %}
+          <tr><td class="mono text-small">{{ event.at | dt('%H:%M:%S') }}</td>
+            <td class="text-small">{{ event.kind }}</td>
+            <td class="mono text-small text-muted">{{ event.ip_address }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+      </div>
+    </div>
+    <div class="card card-flush">
+      <div class="card-head"><h3 style="font-size:16px;margin:0">logins</h3></div>
+      <div class="table-wrap" style="max-height:380px;overflow-y:auto">
+        <table class="data"><tbody>
+        {% for login in logins %}
+          <tr><td class="mono text-small">{{ login.at | dt('%Y-%m-%d %H:%M') }}</td>
+            <td>{% if login.success %}<span class="badge badge-green">ok</span>
+                {% else %}<span class="badge badge-red">fail</span>{% endif %}</td>
+            <td class="mono text-small">{{ login.ip_address }}</td></tr>
+        {% endfor %}
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

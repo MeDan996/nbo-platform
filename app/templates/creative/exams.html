@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ t('nav.exams') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <div class="row-between row-wrap">
+    <h1>{{ t('nav.exams') }}</h1>
+    <form method="post" action="/creative/exams/new" class="row">
+      <input name="title" placeholder="{{ t('creative.exam_title') }}" style="width:auto">
+      <button class="btn btn-primary" type="submit">+ {{ t('creative.build_exam') }}</button>
+    </form>
+  </div>
+  <div class="card card-flush" style="margin-top:18px">
+    {% if exams %}
+    <table class="data">
+      <thead><tr><th>{{ t('creative.exam_title') }}</th><th>{{ t('survival.questions') }}</th>
+        <th>{{ t('survival.duration') }}</th><th>{{ t('admin.severity') }}</th><th></th></tr></thead>
+      <tbody>
+      {% for exam in exams %}
+        <tr>
+          <td><a href="/creative/exams/{{ exam.id }}" style="font-weight:600">{{ exam.title }}</a>
+            <div class="text-small text-muted mono">{{ exam.slug }}</div></td>
+          <td class="num">{{ exam.question_count }}</td>
+          <td class="num">{{ exam.duration_minutes }}</td>
+          <td><span class="badge badge-outline">{{ exam.status }}</span>
+            {% if exam.is_rated %}<span class="badge badge-purple">{{ t('survival.rated') }}</span>{% endif %}</td>
+          <td class="text-right">
+            <a class="btn btn-sm btn-outline" href="/survival/{{ exam.slug }}">{{ t('creative.preview') }}</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}{{ empty_state(t('common.empty')) }}{% endif %}
+  </div>
+</div>
+{% endblock %}

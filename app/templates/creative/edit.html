@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}{{ question.title(locale) }}{% endblock %}
+
+{% block head %}
+<style>
+  .loc-tabs { display:flex; gap:4px; margin-bottom:10px; }
+  .loc-tabs button { padding:5px 14px; border:1px solid var(--line-2); background:var(--bg);
+                     border-radius:var(--radius-pill); font:inherit; font-size:13.5px;
+                     font-weight:700; cursor:pointer; color:var(--muted); }
+  .loc-tabs button.active { background:var(--blue); border-color:var(--blue); color:#fff; }
+  .loc-pane[hidden] { display:none; }
+  .st-card { border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+  .st-card.is-true { border-left:4px solid var(--green); }
+  .st-card.is-false { border-left:4px solid var(--red); }
+  textarea.stem { min-height:170px; font-family:var(--mono); font-size:14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/creative/questions">← {{ t('nav.question_bank') }}</a>
+
+  <div class="row-between row-wrap" style="margin:12px 0 18px">
+    <div>
+      <h1 style="margin-bottom:4px">{{ question.title(locale) }}</h1>
+      <div class="row row-wrap" style="gap:6px">
+        {{ status_badge(question.status, t) }}
+        {% if question.is_official_ibo %}<span class="badge badge-purple">IBO</span>{% endif %}
+        {% if question.template_of_id %}
+          <a class="badge badge-outline" href="/creative/questions/{{ question.template_of_id }}">
+            ↳ {{ t('creative.from_template') }}</a>
+        {% endif %}
+        <span class="badge badge-outline mono">#{{ question.id }}</span>
+      </div>
+    </div>
+    <div class="row">
+      {% if question.status in ('draft', 'changes_requested') %}
+        <form method="post" action="/creative/questions/{{ question.id }}/submit" class="inline-form">
+          <button class="btn btn-success" type="submit">{{ t('creative.submit_review') }}</button>
+        </form>
+      {% endif %}
+      <button class="btn btn-primary" type="submit" form="question-form">{{ t('common.save') }}</button>
+    </div>
+  </div>
+
+  {% if request.query_params.get('saved') %}
+    <div class="flash flash-success">{{ t('common.save') }} ✓</div>
+  {% endif %}
+
+  {% if question.reviews %}
+    {% set last = question.reviews[-1] %}
+    {% if last.comment %}
+      <div class="flash flash-{{ 'warn' if last.decision == 'request_changes' else 'info' }}">
+        <b>{{ last.reviewer.full_name if last.reviewer else '—' }}:</b> {{ last.comment }}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <form method="post" action="/creative/questions/{{ question.id }}" id="question-form">
+  <div class="grid grid-sidebar">
+
+    {# ---------------------------------------------------------- main column #}
+    <div class="stack">
+      <div class="card">
+        <div class="row-between" style="margin-bottom:12px">
+          <h2 style="font-size:18px;margin:0">{{ t('creative.stem') }}</h2>
+          <div class="loc-tabs" data-tabs="stem">
+            {% for loc in editor_locales %}
+              <button type="button" data-loc="{{ loc }}"
+                      class="{{ 'active' if loc == settings.default_locale }}">{{ loc | upper }}</button>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% for loc in editor_locales %}
+        {% set tr = (question.translations | selectattr('locale', 'equalto', loc) | first) %}
+        <div class="loc-pane" data-tabs-pane="stem" data-loc="{{ loc }}"
+             {{ 'hidden' if loc != settings.default_locale }}>
+          <div class="field">
+            <label for="title__{{ loc }}">{{ t('creative.exam_title') }} ({{ loc | upper }})</label>
+            <input id="title__{{ loc }}" name="title__{{ loc }}" value="{{ tr.title if tr else '' }}">
+          </div>
+          <div class="field">
+            <label for="stem__{{ loc }}">{{ t('creative.stem') }} ({{ loc | upper }})</label>
+            <textarea class="stem" id="stem__{{ loc }}" name="stem__{{ loc }}">{{ tr.stem if tr else '' }}</textarea>
+            <div class="field-hint">
+              **bold** · *italic* · ~sub~ (H~2~O) · ^sup^ (Ca^2+^) · pipe tables · ![caption](/media/…)
+            </div>
+          </div>
+          <div class="field">
+            <label for="instructions__{{ loc }}">{{ t('survival.instructions') }}</label>
+            <textarea id="instructions__{{ loc }}" name="instructions__{{ loc }}"
+                      rows="2">{{ tr.instructions if tr else '' }}</textarea>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="explanation__{{ loc }}">{{ t('creative.explanation') }}</label>
+            <textarea id="explanation__{{ loc }}" name="explanation__{{ loc }}"
+                      rows="3">{{ tr.general_explanation if tr else '' }}</textarea>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {# ------------------------------------------------------------ statements #}
+      <div class="card" id="statements">
+        <div class="row-between" style="margin-bottom:12px">
+          <h2 style="font-size:18px;margin:0">{{ t('creative.statements') }}
+            <span class="text-muted text-small">({{ question.statements | length }})</span></h2>
+          <div class="loc-tabs" data-tabs="st">
+            {% for loc in editor_locales %}
+              <button type="button" data-loc="{{ loc }}"
+                      class="{{ 'active' if loc == settings.default_locale }}">{{ loc | upper }}</button>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% for statement in question.statements %}
+        <div class="st-card {{ 'is-true' if statement.is_true else 'is-false' }}" data-st-card>
+          <div class="row-between" style="margin-bottom:10px">
+            <b style="font-size:17px">{{ statement.label }}</b>
+            <div class="row">
+              <div class="checkbox">
+                <input type="checkbox" id="st__{{ statement.id }}__true" name="st__{{ statement.id }}__true"
+                       {{ 'checked' if statement.is_true }} data-truth>
+                <label for="st__{{ statement.id }}__true">{{ t('creative.is_true') }}</label>
+              </div>
+              <div class="checkbox">
+                <input type="checkbox" id="st__{{ statement.id }}__pin" name="st__{{ statement.id }}__pin"
+                       {{ 'checked' if statement.pin_position }}>
+                <label for="st__{{ statement.id }}__pin">pin</label>
+              </div>
+            </div>
+          </div>
+
+          {% for loc in editor_locales %}
+          {% set str_ = (statement.translations | selectattr('locale', 'equalto', loc) | first) %}
+          <div class="loc-pane" data-tabs-pane="st" data-loc="{{ loc }}"
+               {{ 'hidden' if loc != settings.default_locale }}>
+            <div class="field">
+              <label for="st__{{ statement.id }}__text__{{ loc }}">
+                {{ t('creative.statement_text') }} ({{ loc | upper }})</label>
+              <textarea id="st__{{ statement.id }}__text__{{ loc }}"
+                        name="st__{{ statement.id }}__text__{{ loc }}"
+                        rows="2">{{ str_.text if str_ else '' }}</textarea>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label for="st__{{ statement.id }}__expl__{{ loc }}">{{ t('creative.explanation') }}</label>
+              <textarea id="st__{{ statement.id }}__expl__{{ loc }}"
+                        name="st__{{ statement.id }}__expl__{{ loc }}"
+                        rows="2">{{ str_.explanation if str_ else '' }}</textarea>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-sm btn-outline" type="submit"
+                  formaction="/creative/questions/{{ question.id }}/statements/add" formnovalidate>
+            + {{ t('creative.add_statement') }}
+          </button>
+          {% if question.statements %}
+          <button class="btn btn-sm btn-ghost" type="submit"
+                  formaction="/creative/questions/{{ question.id }}/statements/{{ question.statements[-1].id }}/delete"
+                  formnovalidate>− {{ t('common.delete') }}</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ------------------------------------------------------------- sidebar #}
+    <aside class="stack">
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('creative.question_type') }}</h3>
+        <div class="field">
+          <select name="question_type">
+            {% for qt in question_types %}
+              <option value="{{ qt.value }}" {{ 'selected' if question.question_type == qt.value }}>
+                {{ qt.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="topic_id">{{ t('creative.topic') }}</label>
+          <select id="topic_id" name="topic_id">
+            <option value="">{{ t('common.none') }}</option>
+            {% for topic in topics %}
+              <option value="{{ topic.id }}" {{ 'selected' if question.topic_id == topic.id }}>
+                {{ topic.name(locale) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficulty">{{ t('creative.difficulty') }}</label>
+          <select id="difficulty" name="difficulty">
+            {% for d in difficulties %}
+              <option value="{{ d.value }}" {{ 'selected' if question.difficulty == d.value }}>
+                {{ t('difficulty.' ~ d.value) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="grid grid-2" style="gap:10px">
+          <div class="field">
+            <label for="max_points">{{ t('survival.points') }}</label>
+            <input id="max_points" name="max_points" type="number" step="0.1" min="0.1"
+                   value="{{ question.max_points }}">
+          </div>
+          <div class="field">
+            <label for="estimated_seconds">{{ t('stats.avg_time') }}</label>
+            <input id="estimated_seconds" name="estimated_seconds" type="number" min="10"
+                   value="{{ question.estimated_seconds }}">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="tags">tags</label>
+          <input id="tags" name="tags" value="{{ question.tags | join(', ') }}" placeholder="parsimony, tulipa">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('results.score') }}</h3>
+        <div class="field">
+          <label for="scoring_curve">curve</label>
+          <input id="scoring_curve" name="scoring_curve"
+                 value="{{ question.scoring_curve.values() | list | first | join(', ') if question.scoring_curve else '' }}"
+                 placeholder="{{ default | join(', ') }}">
+          <div class="field-hint">
+            {{ t('common.none') }} → {{ default | join(', ') }}
+          </div>
+        </div>
+        <div class="panel {{ 'panel-warn' if guess_rate > 0.4 else '' }} text-small">
+          {% if guess_rate > 0.4 %}
+            {{ t('creative.guessing_warning', percent=(guess_rate * 100) | round | int) }}
+          {% else %}
+            E[guess] = {{ (guess_rate * 100) | round(1) }}%
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('creative.source') }}</h3>
+        <div class="field">
+          <label for="source_ref">ref</label>
+          <input id="source_ref" name="source_ref" value="{{ question.source_ref or '' }}"
+                 placeholder="IBO 2024 Theory A Q1">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="source_year">year</label>
+          <input id="source_year" name="source_year" type="number" min="1990" max="2100"
+                 value="{{ question.source_year or '' }}">
+        </div>
+      </div>
+    </aside>
+  </div>
+  </form>
+
+  {# ----------------------------------------------------------------- figures #}
+  <div class="card" id="figures" style="margin-top:18px">
+    <h2 style="font-size:18px">{{ t('creative.figures') }}</h2>
+    <div class="grid grid-3">
+      {% for figure in question.figures %}
+      <div class="figure">
+        <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}">
+        <form method="post" action="/creative/questions/{{ question.id }}" class="stack" style="margin-top:10px">
+          {% for loc in editor_locales %}
+          {% set ftr = (figure.translations | selectattr('locale', 'equalto', loc) | first) %}
+          <input name="fig__{{ figure.id }}__caption__{{ loc }}" placeholder="{{ t('creative.caption') }} {{ loc|upper }}"
+                 value="{{ ftr.caption if ftr else '' }}" form="question-form">
+          <input name="fig__{{ figure.id }}__alt__{{ loc }}" placeholder="{{ t('creative.alt_text') }} {{ loc|upper }}"
+                 value="{{ ftr.alt_text if ftr else '' }}" form="question-form">
+          {% endfor %}
+        </form>
+        <form method="post" action="/creative/questions/{{ question.id }}/figures/{{ figure.id }}/delete"
+              style="margin-top:8px">
+          <button class="btn btn-sm btn-ghost" type="submit">{{ t('common.delete') }}</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <form method="post" action="/creative/questions/{{ question.id }}/figures"
+          enctype="multipart/form-data" class="row row-wrap" style="margin-top:14px;align-items:flex-end">
+      <div class="field grow" style="margin:0;min-width:220px">
+        <label for="figure-file">{{ t('creative.upload_figure') }}</label>
+        <input id="figure-file" type="file" name="file" accept="image/*" required>
+      </div>
+      <div class="checkbox" style="padding-bottom:10px">
+        <input type="checkbox" id="in_appendix" name="in_appendix" value="1">
+        <label for="in_appendix">appendix</label>
+      </div>
+      <button class="btn btn-outline" type="submit">{{ t('creative.upload_figure') }}</button>
+    </form>
+  </div>
+
+  {# ----------------------------------------------------------------- preview #}
+  <div class="card" style="margin-top:18px">
+    <h2 style="font-size:18px">{{ t('creative.preview') }} ({{ locale | upper }})</h2>
+    {% set tr = question.tr(locale) %}
+    <div class="question-body" style="padding:0">{{ (tr.stem if tr else '') | md | safe }}</div>
+    <div class="statements" style="padding:12px 0 0">
+      {% for statement in question.statements %}
+      <div class="statement">
+        <div class="st-label">{{ statement.label }}</div>
+        <div class="st-text">{{ statement.text(locale) | md | safe }}</div>
+        <span class="badge {{ 'badge-green' if statement.is_true else 'badge-red' }}">
+          {{ t('survival.true') if statement.is_true else t('survival.false') }}</span>
+        {% if statement.explanation(locale) %}
+          <div class="explanation">{{ statement.explanation(locale) | md | safe }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Locale tabs: each group switches every pane that shares its data-tabs name,
+   so the statement editors all follow the same language as the stem. */
+document.querySelectorAll("[data-tabs]").forEach(function (group) {
+  var name = group.dataset.tabs;
+  group.addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-loc]");
+    if (!button) return;
+    var loc = button.dataset.loc;
+    document.querySelectorAll('[data-tabs="' + name + '"] button').forEach(function (b) {
+      b.classList.toggle("active", b.dataset.loc === loc);
+    });
+    document.querySelectorAll('[data-tabs-pane="' + name + '"]').forEach(function (pane) {
+      pane.hidden = pane.dataset.loc !== loc;
+    });
+  });
+});
+
+/* Colour the statement card as its truth value is toggled. */
+document.querySelectorAll("[data-truth]").forEach(function (input) {
+  input.addEventListener("change", function () {
+    var card = input.closest("[data-st-card]");
+    card.classList.toggle("is-true", input.checked);
+    card.classList.toggle("is-false", !input.checked);
+  });
+});
+</script>
+{% endblock %}

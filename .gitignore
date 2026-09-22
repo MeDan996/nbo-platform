@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.db-journal
+# SQLite runs in WAL mode (see app/db.py), which leaves these sidecar files
+# next to the database. They are transient and must never be tracked.
+*.db-wal
+*.db-shm
+*.sqlite3
+.env
+data/uploads/
+data/*.db
+.pytest_cache/
+.idea/
+.vscode/

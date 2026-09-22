@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, status_badge, empty_state %}
+{% block title %}{{ t('creative.title') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <div class="row-between row-wrap">
+    <div>
+      <h1>{{ t('creative.title') }}</h1>
+      <p class="text-muted">{{ t('creative.subtitle') }}</p>
+    </div>
+    <form method="post" action="/creative/questions/new" class="row">
+      <button class="btn btn-primary btn-lg" type="submit">+ {{ t('creative.new_question') }}</button>
+    </form>
+  </div>
+
+  <div class="grid grid-4" style="margin:22px 0">
+    {{ stat_tile(counts.get('draft', 0), t('status.draft')) }}
+    {{ stat_tile(counts.get('in_review', 0), t('status.in_review')) }}
+    {{ stat_tile(counts.get('approved', 0), t('status.approved'), none, '#0d923f') }}
+    {{ stat_tile(template_count, t('creative.templates'), none, '#9059ff') }}
+  </div>
+
+  {% if pending_review %}
+    <div class="flash flash-warn">
+      {{ pending_review }} — <a href="/creative/review">{{ t('nav.review_queue') }} →</a>
+    </div>
+  {% endif %}
+
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      <div class="card card-flush">
+        <div class="card-head">
+          <h2 style="font-size:18px">{{ t('creative.my_questions') }}</h2>
+          <a class="text-small" href="/creative/questions?mine=1">{{ t('common.all') }} →</a>
+        </div>
+        {% if recent %}
+        <table class="data">
+          <tbody>
+          {% for question in recent %}
+            <tr>
+              <td>
+                <a href="/creative/questions/{{ question.id }}" style="font-weight:600">
+                  {{ question.title(locale) }}
+                </a>
+                <div class="text-small text-muted">
+                  {{ (question.tr(locale).stem if question.tr(locale) else '') | excerpt(90) }}
+                </div>
+              </td>
+              <td class="text-small text-muted nowrap">
+                {{ question.topic.name(locale) if question.topic else '—' }}
+              </td>
+              <td>{{ status_badge(question.status, t) }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          {{ empty_state(t('creative.no_questions')) }}
+        {% endif %}
+      </div>
+
+      <div class="card card-flush">
+        <div class="card-head">
+          <h2 style="font-size:18px">{{ t('nav.exams') }}</h2>
+          <form method="post" action="/creative/exams/new" class="row">
+            <input name="title" placeholder="{{ t('creative.exam_title') }}" style="width:auto">
+            <button class="btn btn-sm btn-primary" type="submit">+</button>
+          </form>
+        </div>
+        {% if my_exams %}
+        <table class="data">
+          <tbody>
+          {% for exam in my_exams %}
+            <tr>
+              <td><a href="/creative/exams/{{ exam.id }}" style="font-weight:600">{{ exam.title }}</a></td>
+              <td class="text-small text-muted">{{ exam.question_count }} {{ t('survival.questions') | lower }}</td>
+              <td><span class="badge badge-outline">{{ exam.status }}</span></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}{{ empty_state(t('common.empty')) }}{% endif %}
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a href="/creative/questions">{{ t('nav.question_bank') }}</a>
+        <a href="/creative/questions?templates_only=1">{{ t('creative.templates') }}
+          <span class="badge badge-purple">{{ template_count }}</span></a>
+        {% if user.can('reviewer') or user.is_admin %}
+          <a href="/creative/review">{{ t('nav.review_queue') }}
+            {% if pending_review %}<span class="badge badge-gold">{{ pending_review }}</span>{% endif %}</a>
+        {% endif %}
+        <a href="/creative/exams">{{ t('nav.exams') }}</a>
+      </nav>
+    </aside>
+  </div>
+</div>
+{% endblock %}

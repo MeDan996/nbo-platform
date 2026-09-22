@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state, user_chip %}
+{% block title %}{{ t('admin.denials') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('admin.denials') }}</h1>
+  <p class="text-muted">
+    Every refused entry is recorded here, so a participant blocked in error can be
+    found and granted access rather than silently losing their sitting.
+  </p>
+  <div class="card card-flush">
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('survival.duration') }}</th><th>{{ t('auth.username') }}</th>
+          <th>{{ t('nav.exams') }}</th><th>{{ t('admin.flag') }}</th><th>ip</th><th></th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="mono text-small">{{ row.at | dt }}</td>
+            <td>{{ user_chip(row.user, 'sm') }}</td>
+            <td class="text-small">{{ exams[row.exam_id].title if exams.get(row.exam_id) else row.exam_id }}</td>
+            <td><span class="badge badge-gold">{{ t('rule.' ~ row.rule) if ('rule.' ~ row.rule) else row.rule }}</span>
+              <div class="text-small text-muted">{{ t('denied.' ~ row.message) }}</div></td>
+            <td class="mono text-small">{{ row.ip_address }}</td>
+            <td class="text-right">
+              <form method="post" action="/admin/grants" class="row inline-form">
+                <input type="hidden" name="exam_id" value="{{ row.exam_id }}">
+                <input type="hidden" name="user_id" value="{{ row.user_id }}">
+                <input name="reason" placeholder="{{ t('admin.reason') }}" style="width:130px">
+                <button class="btn btn-sm btn-success" type="submit">{{ t('admin.grant_access') }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty_state(t('common.empty')) }}{% endif %}
+  </div>
+</div>
+{% endblock %}

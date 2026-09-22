@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ exam.localized_title(locale) }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page">
+  <a class="text-small" href="/survival">← {{ t('survival.title') }}</a>
+  <h1 style="margin-top:12px">{{ exam.localized_title(locale) }}</h1>
+  {% if exam.subtitle %}<p class="text-muted">{{ exam.subtitle }}</p>{% endif %}
+
+  <div class="row row-wrap" style="gap:6px;margin-bottom:18px">
+    {% if exam.is_rated %}<span class="badge badge-purple">{{ t('survival.rated') }}</span>{% endif %}
+    {% if exam.is_open_at() %}<span class="badge badge-green badge-dot">{{ t('survival.open_now') }}</span>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="grid grid-4" style="gap:14px">
+      <div><div class="text-small text-muted">{{ t('survival.questions') }}</div>
+           <b style="font-size:20px">{{ exam.question_count }}</b></div>
+      <div><div class="text-small text-muted">{{ t('survival.points') }}</div>
+           <b style="font-size:20px">{{ exam.total_points | points }}</b></div>
+      <div><div class="text-small text-muted">{{ t('survival.duration') }}</div>
+           <b style="font-size:20px">{{ exam.duration_minutes }}<span class="text-small"> {{ t('common.minutes') }}</span></b></div>
+      <div><div class="text-small text-muted">{{ t('survival.attempts_left') }}</div>
+           <b style="font-size:20px">{{ [0, exam.max_attempts - my_attempts | length] | max }}</b></div>
+    </div>
+
+    {% if exam.opens_at or exam.closes_at %}
+    <hr class="divider">
+    <div class="text-small text-muted">
+      {% if exam.opens_at %}{{ t('survival.opens_at') }}: <b>{{ exam.opens_at | dt }}</b>{% endif %}
+      {% if exam.closes_at %} · {{ t('survival.closes_at') }}: <b>{{ exam.closes_at | dt }}</b>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if exam.description %}<hr class="divider">{{ exam.description | md | safe }}{% endif %}
+  </div>
+
+  {% if not user %}
+    <div class="card" style="margin-top:16px;text-align:center">
+      <p>{{ t('auth.no_account') }}</p>
+      <a class="btn btn-primary" href="/auth/login?next=/survival/{{ exam.slug }}">{{ t('nav.login') }}</a>
+    </div>
+  {% elif decision and decision.denied %}
+    <div class="card panel-warn" style="margin-top:16px">
+      <h3>{{ t('denied.title') }}</h3>
+      <p>{{ t('denied.' ~ decision.message) }}</p>
+    </div>
+  {% else %}
+    <form method="post" action="/survival/{{ exam.slug }}/start" style="margin-top:16px">
+      <button class="btn btn-primary btn-lg btn-block" type="submit">
+        {% if decision and decision.rule == 'resume' %}{{ t('survival.resume') }}
+        {% else %}{{ t('survival.start') }}{% endif %}
+      </button>
+    </form>
+    <p class="text-small text-muted text-center" style="margin-top:10px">
+      Your network address and browser fingerprint are recorded for this sitting.
+    </p>
+  {% endif %}
+
+  {% if my_attempts %}
+  <h2 style="margin-top:32px;font-size:20px">{{ t('landing.stat.attempts') }}</h2>
+  <div class="card card-flush">
+    <table class="data">
+      <tbody>
+      {% for attempt in my_attempts %}
+        <tr>
+          <td>#{{ attempt.attempt_number }}</td>
+          <td class="text-small text-muted">{{ attempt.submitted_at | dt if attempt.submitted_at else attempt.started_at | dt }}</td>
+          <td>
+            {% if attempt.status == 'in_progress' %}<span class="badge badge-gold">{{ t('survival.resume') }}</span>
+            {% elif attempt.status == 'voided' %}<span class="badge badge-red">voided</span>
+            {% elif results_released %}<b>{{ attempt.raw_score | points }}</b> / {{ attempt.max_score | points }}
+            {% else %}<span class="text-muted">{{ t('results.pending') }}</span>{% endif %}
+          </td>
+          <td class="text-right">
+            <a class="btn btn-sm btn-outline"
+               href="/survival/attempt/{{ attempt.id }}{{ '' if attempt.status == 'in_progress' else '/result' }}">
+              {{ t('survival.resume') if attempt.status == 'in_progress' else t('survival.review') }}
+            </a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if exam.results_released() %}
+    <p style="margin-top:16px"><a href="/survival/{{ exam.slug }}/standings">{{ t('nav.leaderboard') }} →</a></p>
+  {% endif %}
+</div>
+{% endblock %}

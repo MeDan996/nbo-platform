@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile %}
+{% block title %}{{ t('admin.recompute') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page">
+  <div class="card">
+    <h1 style="font-size:22px">{{ exam.title }}</h1>
+    <div class="grid grid-2" style="margin:18px 0">
+      {{ stat_tile(report.participants, t('landing.stat.participants')) }}
+      {{ stat_tile(report.rating_changes, t('results.rating_change')) }}
+      {{ stat_tile(report.flagged_attempts, t('admin.flags'), none,
+                   '#d92916' if report.flagged_attempts else none) }}
+      {{ stat_tile(t('common.yes') if report.rated else t('common.no'), t('survival.rated')) }}
+    </div>
+    <div class="row">
+      <a class="btn btn-primary" href="/survival/{{ exam.slug }}/standings">{{ t('nav.leaderboard') }}</a>
+      <a class="btn btn-outline" href="/admin/exams/{{ exam.id }}/analysis">analysis</a>
+      <form method="post" action="/admin/exams/{{ exam.id }}/release-results" class="inline-form">
+        <button class="btn btn-success" type="submit">{{ t('admin.publish_results') }}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

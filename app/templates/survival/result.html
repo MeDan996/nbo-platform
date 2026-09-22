@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, accuracy_bar, histogram %}
+{% block title %}{{ t('results.title') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/survival/{{ exam.slug }}">← {{ exam.localized_title(locale) }}</a>
+  <h1 style="margin-top:12px">{{ t('results.title') }}</h1>
+
+  {% if attempt.status == 'voided' %}
+    <div class="flash flash-error">{{ attempt.void_reason }}</div>
+  {% endif %}
+
+  <div class="grid grid-4" style="margin:20px 0">
+    {{ stat_tile(attempt.raw_score | points ~ ' / ' ~ attempt.max_score | points, t('results.score')) }}
+    {{ stat_tile(attempt.percent | round | int ~ '%', t('results.percent')) }}
+    {{ stat_tile('#' ~ attempt.rank if attempt.rank else '—', t('results.rank')) }}
+    {% if attempt.rating_delta is not none %}
+      {{ stat_tile(attempt.rating_after, t('stats.rating'), attempt.rating_delta,
+                   tier_for(attempt.rating_after)[1]) }}
+    {% else %}
+      {{ stat_tile((attempt.percentile | round | int ~ '%') if attempt.percentile else '—', t('results.percentile')) }}
+    {% endif %}
+  </div>
+
+  <div class="grid grid-2" style="margin-bottom:24px">
+    <div class="card">
+      <h2 style="font-size:19px">{{ t('results.breakdown') }}</h2>
+      <div class="bars">
+        {% for row in topic_rows %}
+          {{ accuracy_bar(row.name, row.accuracy, row.cohort, row.color,
+                          '/stats/topic/' ~ row.topic.slug, row.correct ~ '/' ~ row.seen) }}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="font-size:19px">{{ t('results.distribution') }}</h2>
+      {% if exam_stats.histogram %}
+        {{ histogram(exam_stats.histogram, my_bucket) }}
+        <div class="text-small text-muted" style="margin-top:10px">
+          {{ t('results.cohort_average') }}: {{ exam_stats.mean_score | points }} ·
+          n = {{ exam_stats.participants }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 style="font-size:20px">{{ t('survival.review') }}</h2>
+  {% for item in review %}
+  {% set q = item.question %}
+  {% set tr = q.tr(locale) %}
+  <article class="question-card" style="margin-bottom:16px">
+    <header class="question-head">
+      <span class="question-number">{{ item.index }}</span>
+      <span class="badge {{ 'badge-green' if item.answer.is_fully_correct else
+                            'badge-gold' if item.answer.awarded_points > 0 else 'badge-red' }}">
+        {{ item.answer.awarded_points | points }} / {{ item.answer.max_points | points }}
+      </span>
+      {% if item.answer.statement_count %}
+        <span class="text-small text-muted">
+          {{ item.answer.correct_count }}/{{ item.answer.statement_count }}
+        </span>
+      {% endif %}
+      {% if q.topic %}<span class="badge badge-outline">{{ q.topic.name(locale) }}</span>{% endif %}
+    </header>
+
+    <div class="question-body">{{ (tr.stem if tr else '') | md | safe }}</div>
+
+    {% if q.figures %}
+    <div class="question-figures">
+      {% for figure in q.figures %}
+      <figure class="figure"><img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}" loading="lazy">
+        {% if figure.caption(locale) %}<figcaption>{{ figure.caption(locale) }}</figcaption>{% endif %}
+      </figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="statements">
+      {% for statement in item.statements %}
+      {% set given = item.answer.response.get(statement.id | string) %}
+      {% set hit = item.answer.per_statement_correct.get(statement.id | string) %}
+      <div class="statement {{ 'correct' if hit else 'incorrect' }}">
+        <div class="st-label">{{ 'ABCDEFGH'[loop.index0] }}</div>
+        <div class="st-text">{{ statement.text(locale) | md | safe }}</div>
+        <div class="tf-group" style="flex-direction:column;align-items:flex-end;gap:2px">
+          <span class="text-small text-muted">{{ t('results.your_answer') }}:
+            <b>{% if given is true %}{{ t('survival.true') }}
+               {% elif given is false %}{{ t('survival.false') }}
+               {% else %}—{% endif %}</b></span>
+          <span class="text-small">{{ t('results.correct_answer') }}:
+            <b>{{ t('survival.true') if statement.is_true else t('survival.false') }}</b></span>
+        </div>
+        {% if statement.explanation(locale) %}
+          <div class="explanation">
+            <b>{{ t('results.explanation') }}.</b> {{ statement.explanation(locale) | md | safe }}
+          </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if tr and tr.general_explanation %}
+      <div style="padding:0 24px 20px">
+        <div class="panel panel-info">{{ tr.general_explanation | md | safe }}</div>
+      </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

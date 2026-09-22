@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import histogram %}
+{% block title %}item analysis{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ exam.title }} — item analysis</h1>
+  <p class="text-muted">
+    <b>p</b> is the mean fraction of marks earned (difficulty). <b>d</b> is the
+    point-biserial correlation with total score: above 0.3 the item separates
+    strong from weak candidates well; below 0.1 it barely discriminates, and a
+    negative value means strong candidates did worse than weak ones — almost
+    always a flawed key or ambiguous wording.
+  </p>
+
+  <div class="card" style="margin:18px 0">
+    {{ histogram(exam_stats.histogram) }}
+    <div class="text-small text-muted" style="margin-top:10px">
+      n = {{ exam_stats.participants }} · mean {{ exam_stats.mean_score | points }} ·
+      sd {{ exam_stats.stdev_score | points }}
+    </div>
+  </div>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>#</th><th>{{ t('creative.stem') }}</th><th>{{ t('creative.topic') }}</th>
+          <th class="num">p</th><th class="num">d</th><th class="num">n</th><th></th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><a href="/creative/questions/{{ row.question.id }}">
+              {{ (row.question.tr(locale).stem if row.question.tr(locale) else '') | excerpt(90) }}</a></td>
+            <td class="text-small">{{ row.question.topic.name(locale) if row.question.topic else '—' }}</td>
+            <td class="num">{{ '%.2f' | format(row.p) if row.p is not none else '—' }}</td>
+            <td class="num">
+              {% if row.d is none %}—
+              {% else %}
+                <b class="{{ 'delta-up' if row.d >= 0.3 else 'delta-down' if row.d < 0.1 else '' }}">
+                  {{ '%.2f' | format(row.d) }}</b>
+              {% endif %}
+            </td>
+            <td class="num text-muted">{{ row.n }}</td>
+            <td>
+              {% if row.d is not none and row.d < 0 %}
+                <span class="badge badge-red">check key</span>
+              {% elif row.p is not none and row.p < 0.1 %}
+                <span class="badge badge-gold">very hard</span>
+              {% elif row.p is not none and row.p > 0.95 %}
+                <span class="badge badge-outline">very easy</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

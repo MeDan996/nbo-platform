@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ t('results.pending') }}{% endblock %}
+{% block content %}
+<div class="wrap-narrow page text-center">
+  <div class="card">
+    <div style="font-size:44px">⏳</div>
+    <h1 style="font-size:24px">{{ t('results.pending') }}</h1>
+    <p class="text-muted">
+      {{ exam.localized_title(locale) }}
+      {% if exam.results_visible_at %}<br>{{ exam.results_visible_at | dt }}
+      {% elif exam.closes_at %}<br>{{ exam.closes_at | dt }}{% endif %}
+    </p>
+    {% if attempt %}
+      <div class="panel" style="text-align:left">
+        <div class="row-between"><span>{{ t('survival.answered') }}</span>
+          <b>{{ attempt.answers | selectattr('is_answered') | list | length }} / {{ attempt.answers | length }}</b></div>
+        <div class="row-between"><span>{{ t('survival.submit') }}</span>
+          <b>{{ attempt.submitted_at | dt }}</b></div>
+      </div>
+    {% endif %}
+    <a class="btn btn-primary" href="/survival">{{ t('common.back') }}</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ t('nav.review_queue') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('nav.review_queue') }}</h1>
+  {% for question in questions %}
+  {% set tr = question.tr(locale) %}
+  <div class="card" style="margin-bottom:16px">
+    <div class="row-between row-wrap">
+      <div class="grow">
+        <a href="/creative/questions/{{ question.id }}"><b>{{ question.title(locale) }}</b></a>
+        <div class="text-small text-muted">
+          {{ question.topic.name(locale) if question.topic else '—' }} ·
+          {{ t('difficulty.' ~ question.difficulty) }} ·
+          {{ question.author.full_name if question.author else '—' }}
+        </div>
+      </div>
+      <a class="btn btn-sm btn-outline" href="/creative/questions/{{ question.id }}">{{ t('common.edit') }}</a>
+    </div>
+    <div style="margin:12px 0">{{ (tr.stem if tr else '') | md | safe }}</div>
+    <div class="statements" style="padding:0">
+      {% for statement in question.statements %}
+      <div class="statement">
+        <div class="st-label">{{ statement.label }}</div>
+        <div class="st-text">{{ statement.text(locale) | md | safe }}</div>
+        <span class="badge {{ 'badge-green' if statement.is_true else 'badge-red' }}">
+          {{ t('survival.true') if statement.is_true else t('survival.false') }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    <form method="post" action="/creative/questions/{{ question.id }}/review"
+          class="row row-wrap" style="margin-top:14px;align-items:flex-end">
+      <div class="field grow" style="margin:0;min-width:220px">
+        <label>{{ t('creative.review_comment') }}</label>
+        <input name="comment" placeholder="…">
+      </div>
+      <button class="btn btn-success" name="decision" value="approve">{{ t('creative.approve') }}</button>
+      <button class="btn btn-outline" name="decision" value="request_changes">{{ t('creative.request_changes') }}</button>
+    </form>
+  </div>
+  {% else %}
+    <div class="card">{{ empty_state(t('admin.no_flags')) }}</div>
+  {% endfor %}
+</div>
+{% endblock %}

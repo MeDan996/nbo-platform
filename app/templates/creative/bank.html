@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, empty_state %}
+{% block title %}{{ t('nav.question_bank') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <div class="row-between row-wrap">
+    <h1>{{ t('nav.question_bank') }}</h1>
+    <form method="post" action="/creative/questions/new">
+      <button class="btn btn-primary" type="submit">+ {{ t('creative.new_question') }}</button>
+    </form>
+  </div>
+
+  <form method="get" class="card row row-wrap" style="margin:18px 0;gap:10px;align-items:flex-end">
+    <div class="field grow" style="margin:0;min-width:180px">
+      <label for="q">{{ t('common.search') }}</label>
+      <input id="q" name="q" value="{{ filters.q }}" placeholder="…">
+    </div>
+    <div class="field" style="margin:0">
+      <label for="topic">{{ t('creative.topic') }}</label>
+      <select id="topic" name="topic">
+        <option value="">{{ t('common.all') }}</option>
+        {% for topic in topics %}
+          <option value="{{ topic.slug }}" {{ 'selected' if filters.topic == topic.slug }}>{{ topic.name(locale) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label for="status">{{ t('admin.severity') }}</label>
+      <select id="status" name="status">
+        <option value="">{{ t('common.all') }}</option>
+        {% for s in statuses %}
+          <option value="{{ s.value }}" {{ 'selected' if filters.status == s.value }}>{{ t('status.' ~ s.value) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="checkbox" style="padding-bottom:10px">
+      <input type="checkbox" id="mine" name="mine" value="1" {{ 'checked' if filters.mine }}>
+      <label for="mine">{{ t('creative.my_questions') }}</label>
+    </div>
+    <div class="checkbox" style="padding-bottom:10px">
+      <input type="checkbox" id="templates_only" name="templates_only" value="1"
+             {{ 'checked' if filters.templates_only }}>
+      <label for="templates_only">{{ t('creative.templates') }}</label>
+    </div>
+    <button class="btn btn-outline" type="submit">{{ t('common.filter') }}</button>
+  </form>
+
+  <div class="card card-flush">
+    {% if questions %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th>{{ t('creative.stem') }}</th><th>{{ t('creative.topic') }}</th>
+          <th>{{ t('creative.difficulty') }}</th><th>{{ t('common.language') }}</th>
+          <th>{{ t('admin.severity') }}</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for question in questions %}
+          <tr>
+            <td>
+              <a href="/creative/questions/{{ question.id }}" style="font-weight:600">
+                {{ question.title(locale) }}</a>
+              {% if question.is_official_ibo %}<span class="badge badge-purple">IBO</span>{% endif %}
+              {% if question.template_of_id %}<span class="badge badge-outline">↳</span>{% endif %}
+              <div class="text-small text-muted">
+                {{ (question.tr(locale).stem if question.tr(locale) else '') | excerpt(110) }}
+              </div>
+              {% if question.source_ref %}
+                <div class="text-small mono text-muted">{{ question.source_ref }}</div>
+              {% endif %}
+            </td>
+            <td class="text-small">{{ question.topic.name(locale) if question.topic else '—' }}</td>
+            <td class="text-small">{{ t('difficulty.' ~ question.difficulty) }}</td>
+            <td class="text-small mono">{{ question.locales | join(' ') }}</td>
+            <td>{{ status_badge(question.status, t) }}</td>
+            <td class="text-right nowrap">
+              <form method="post" action="/creative/questions/{{ question.id }}/clone" class="inline-form">
+                <button class="btn btn-sm btn-outline" type="submit">{{ t('creative.from_template') }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty_state(t('creative.no_questions')) }}{% endif %}
+  </div>
+</div>
+{% endblock %}

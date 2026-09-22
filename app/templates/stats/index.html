@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stat_tile, accuracy_bar, activity_calendar, sparkline, empty_state %}
+{% block title %}{{ t('stats.title') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <h1>{{ t('stats.title') }}</h1>
+
+  <div class="grid grid-4" style="margin:20px 0">
+    {{ stat_tile(summary.rating, t('stats.rating'), none, tier_for(summary.rating)[1]) }}
+    {{ stat_tile((summary.accuracy * 100) | round | int ~ '%', t('stats.accuracy')) }}
+    {{ stat_tile(summary.questions_answered, t('stats.questions_answered')) }}
+    {{ stat_tile(summary.streak_days, t('stats.streak')) }}
+  </div>
+
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      <div class="card">
+        <h2 style="font-size:19px">{{ t('stats.by_topic') }}</h2>
+        {% if insights %}
+          <div class="bars">
+            {% for row in insights %}
+              {{ accuracy_bar(row.name, row.accuracy, row.cohort_accuracy, row.color,
+                              '/stats/topic/' ~ row.slug, row.statements_seen) }}
+            {% endfor %}
+          </div>
+          <p class="text-small text-muted" style="margin-top:12px">
+            ▏ {{ t('results.cohort_average') }} · {{ t('stats.vs_cohort') }}
+          </p>
+        {% else %}{{ empty_state(t('stats.not_enough_data'), '', '/practice', t('nav.practice')) }}{% endif %}
+      </div>
+
+      {% if review %}
+      <div class="card card-flush">
+        <div class="card-head"><h2 style="font-size:18px">{{ t('stats.review_these') }}</h2></div>
+        <table class="data">
+          <tbody>
+          {% for entry in review %}
+            <tr>
+              <td>
+                <b>{{ entry.question.title(locale) if entry.question else '—' }}</b>
+                <div class="text-small text-muted">
+                  {{ (entry.question.tr(locale).stem if entry.question and entry.question.tr(locale) else '') | excerpt(90) }}
+                </div>
+              </td>
+              <td class="text-small">{{ entry.topic }}</td>
+              <td class="num"><b class="delta-down">{{ (entry.accuracy * 100) | round | int }}%</b></td>
+              <td class="text-right">
+                <a class="btn btn-sm btn-outline"
+                   href="/survival/attempt/{{ entry.attempt_id }}/result">{{ t('survival.review') }}</a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <div class="card card-flush">
+        <div class="card-head"><h2 style="font-size:18px">{{ t('landing.stat.attempts') }}</h2></div>
+        <div class="table-wrap">
+          <table class="data">
+            <tbody>
+            {% for attempt in attempts %}
+              <tr>
+                <td><a href="/survival/attempt/{{ attempt.id }}/result">
+                  {{ attempt.exam.localized_title(locale) if attempt.exam else '—' }}</a></td>
+                <td class="text-small text-muted">{{ attempt.submitted_at | dt }}</td>
+                <td class="num">{{ attempt.raw_score | points }} / {{ attempt.max_score | points }}</td>
+                <td class="num">{{ attempt.percent | round | int }}%</td>
+                <td class="num">{{ ('#' ~ attempt.rank) if attempt.rank else '—' }}</td>
+              </tr>
+            {% else %}
+              <tr><td class="text-muted">{{ t('common.empty') }}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <aside class="stack">
+      {% if summary.strengths is not defined %}{% endif %}
+      {% if strongest %}
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('stats.strengths') }}</h3>
+        {% for row in strongest %}
+          <div class="row-between" style="padding:6px 0">
+            <a class="text-small" href="/stats/topic/{{ row.slug }}">{{ row.name }}</a>
+            <b class="delta-up text-small">{{ (row.accuracy * 100) | round | int }}%</b>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if weakest %}
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('stats.weaknesses') }}</h3>
+        {% for row in weakest %}
+          <div class="row-between" style="padding:6px 0">
+            <a class="text-small" href="/stats/topic/{{ row.slug }}">{{ row.name }}</a>
+            <b class="delta-down text-small">{{ (row.accuracy * 100) | round | int }}%</b>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if summary.rating_history %}
+      <div class="card">
+        <div class="row-between"><h3 style="font-size:16px;margin:0">{{ t('stats.rating_history') }}</h3>
+          <a class="text-small" href="/stats/rating">→</a></div>
+        {{ sparkline(summary.rating_history | map(attribute='rating') | list) }}
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <h3 style="font-size:16px">{{ t('stats.activity') }}</h3>
+        {{ activity_calendar(calendar) }}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

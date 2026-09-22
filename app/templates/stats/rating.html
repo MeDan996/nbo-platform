@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import sparkline, empty_state %}
+{% block title %}{{ t('stats.rating_history') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/stats">← {{ t('stats.title') }}</a>
+  <h1 style="margin-top:12px">{{ t('stats.rating_history') }}</h1>
+
+  {% if series %}
+  <div class="card">
+    {{ sparkline(series | map(attribute='rating_after') | list, tier_for(user.rating)[1], 140) }}
+    <div class="row-between text-small text-muted">
+      <span>{{ series[0].rating_before }}</span>
+      <span><b style="color:{{ tier_for(user.rating)[1] }}">{{ user.rating }}</b>
+        · {{ t('stats.peak_rating') }} {{ user.peak_rating }}</span>
+    </div>
+  </div>
+
+  <div class="card card-flush" style="margin-top:18px">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>{{ t('nav.exams') }}</th><th class="num">{{ t('results.rank') }}</th>
+          <th class="num">{{ t('landing.stat.participants') }}</th>
+          <th class="num">perf</th><th class="num">Δ</th><th class="num">{{ t('stats.rating') }}</th></tr></thead>
+        <tbody>
+        {% for change in changes %}
+          <tr>
+            <td>{% set exam = exams.get(change.exam_id) %}
+              {% if exam %}<a href="/survival/{{ exam.slug }}/standings">{{ exam.localized_title(locale) }}</a>
+              {% else %}—{% endif %}
+              <div class="text-small text-muted">{{ change.at | dt }}</div></td>
+            <td class="num"><b>#{{ change.rank }}</b></td>
+            <td class="num text-muted">{{ change.participants }}</td>
+            <td class="num text-muted">{{ change.performance }}</td>
+            <td class="num"><b class="{{ 'delta-up' if change.delta > 0 else 'delta-down' }}">
+              {{ '%+d' | format(change.delta) }}</b></td>
+            <td class="num">{{ change.rating_after }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+    <div class="card">{{ empty_state(t('stats.not_enough_data'), '', '/survival', t('nav.exams')) }}</div>
+  {% endif %}
+</div>
+{% endblock %}
