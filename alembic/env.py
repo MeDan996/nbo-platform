@@ -48,6 +48,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
+_is_sqlite = settings.database_url.startswith("sqlite")
 
 
 def run_migrations_offline() -> None:
@@ -58,9 +59,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         render_item=render_item,
-        # SQLite cannot ALTER most things in place; batch mode rewrites the
-        # table instead, and is a no-op on Postgres.
-        render_as_batch=settings.database_url.startswith("sqlite"),
+        render_as_batch=_is_sqlite,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -78,7 +77,7 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             compare_type=True,
             render_item=render_item,
-            render_as_batch=settings.database_url.startswith("sqlite"),
+            render_as_batch=_is_sqlite,
         )
         with context.begin_transaction():
             context.run_migrations()

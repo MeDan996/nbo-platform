@@ -45,11 +45,26 @@ def _bootstrap_admin() -> None:
         log.info("Bootstrapped admin %s", email)
 
 
+def _run_migrations() -> None:
+    """Apply pending Alembic migrations (idempotent)."""
+    from alembic import command
+    from alembic.config import Config
+
+    cfg = Config(str(BASE_DIR.parent / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BASE_DIR.parent / "alembic"))
+    cfg.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+    command.upgrade(cfg, "head")
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Alembic owns the schema in production; this keeps a fresh checkout and the
-    # test database working with no migration step.
-    Base.metadata.create_all(bind=engine)
+    from app.db import _is_sqlite
+
+    if _is_sqlite:
+        # Local dev: create_all is a fast fallback when there is no migration step.
+        Base.metadata.create_all(bind=engine)
+    else:
+        _run_migrations()
     _bootstrap_admin()
     log.info("NBO platform ready (db=%s)", engine.url)
     yield

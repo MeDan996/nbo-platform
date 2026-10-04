@@ -72,23 +72,22 @@ class UtcDateTime(TypeDecorator):
         return value.astimezone(timezone.utc)
 
 
-_connect_args = {}
-if settings.database_url.startswith("sqlite"):
-    # FastAPI may touch a session from a different thread than the one that made it.
-    _connect_args["check_same_thread"] = False
+_is_sqlite = settings.database_url.startswith("sqlite")
 
-engine = create_engine(
-    settings.database_url,
-    connect_args=_connect_args,
-    pool_pre_ping=True,
-    future=True,
-)
+_engine_kwargs: dict = dict(pool_pre_ping=True, future=True)
+if _is_sqlite:
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+else:
+    _engine_kwargs["pool_size"] = 5
+    _engine_kwargs["max_overflow"] = 10
+
+engine = create_engine(settings.database_url, **_engine_kwargs)
 
 
 @event.listens_for(engine, "connect")
 def _sqlite_pragmas(dbapi_connection, _record):
     """WAL + foreign keys make SQLite behave close enough to Postgres for us."""
-    if not settings.database_url.startswith("sqlite"):
+    if not _is_sqlite:
         return
     cur = dbapi_connection.cursor()
     cur.execute("PRAGMA foreign_keys=ON")
