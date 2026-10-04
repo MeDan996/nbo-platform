@@ -3,7 +3,7 @@ name = "nbo-platform"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
-    { name = "dayan.melisov", email = "dayan.melisov@fdmgroup.com" }
+    { name = "dayan.melisov", email = "dayan.melisov@gmail.com" }
 ]
 requires-python = ">=3.11"
 dependencies = [
