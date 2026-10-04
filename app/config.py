@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{(DATA_DIR / 'nbo.db').as_posix()}"
     debug: bool = True
 
+    # Optional first-admin bootstrap: when both are set, startup creates this
+    # admin if no user with that email exists. Never overwrites an existing user.
+    bootstrap_admin_email: str | None = None
+    bootstrap_admin_password: str | None = None
+
     # i18n
     default_locale: str = "ru"
     locales: tuple[str, ...] = ("ru", "ky", "en")
