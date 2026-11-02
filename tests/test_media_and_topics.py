@@ -16,3 +16,13 @@ def test_media_served_from_database(client, db):
 def test_media_missing_is_404(client):
     assert client.get("/media/figures/1/nope.png").status_code == 404
     assert client.get("/media/../config.py").status_code == 404
+
+
+def test_ensure_topics_is_idempotent(db):
+    from app.models.content import Topic
+    from app.services.topics import IBO_TOPICS, ensure_topics
+
+    ensure_topics(db)
+    ensure_topics(db)
+    db.commit()
+    assert db.query(Topic).count() == len(IBO_TOPICS)

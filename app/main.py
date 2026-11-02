@@ -45,6 +45,15 @@ def _bootstrap_admin() -> None:
         log.info("Bootstrapped admin %s", email)
 
 
+def _seed_topics() -> None:
+    from app.db import SessionLocal
+    from app.services.topics import ensure_topics
+
+    with SessionLocal() as db:
+        ensure_topics(db)
+        db.commit()
+
+
 def _run_migrations() -> None:
     """Apply pending Alembic migrations (idempotent)."""
     from alembic import command
@@ -65,6 +74,7 @@ async def lifespan(_app: FastAPI):
         Base.metadata.create_all(bind=engine)
     else:
         _run_migrations()
+    _seed_topics()
     _bootstrap_admin()
     log.info("NBO platform ready (db=%s)", engine.url)
     yield
