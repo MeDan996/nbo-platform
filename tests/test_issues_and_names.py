@@ -201,3 +201,11 @@ def test_localtime_filter_custom_format_and_input_helper():
     assert 'data-fmt="%H:%M:%S"' in out and ">09:05:07 UTC<" in out
     assert _utc_input(moment) == "2026-11-02T09:05"
     assert _utc_input(None) == ""
+
+
+def test_logo_and_icons_are_served(client):
+    for name in ("logo.png", "favicon.ico", "apple-touch-icon.png"):
+        assert client.get(f"/static/img/{name}").status_code == 200, name
+    page = client.get("/")
+    assert "static/img/logo.png" in page.text
+    assert "apple-touch-icon" in page.text

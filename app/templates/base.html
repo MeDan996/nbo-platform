@@ -9,7 +9,9 @@
   <meta name="description" content="{{ t('app.tagline') }}">
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{{ asset('static/css/app.css') }}">
-  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/img/favicon.ico" sizes="any">
+  <link rel="icon" href="/static/img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
   <script src="{{ asset('static/js/fingerprint.js') }}" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -19,8 +21,8 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">N</span>
-      <span>{{ t('app.name') }}</span>
+      <img class="brand-logo" src="{{ asset('static/img/logo.png') }}" alt="{{ t('app.name') }}"
+           width="87" height="42">
     </a>
 
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false"
