@@ -71,3 +71,29 @@ def test_filters(client, db):
     sign_in(client, author)
     page = client.get("/issues?type=feature")
     assert "a feature one" in page.text and "a bug one" not in page.text
+
+
+def test_username_login_and_name_parts(client, db):
+    from app.models.user import User
+    from app.services.auth import hash_password
+
+    user = User(
+        email="dayan.melisov@gmail.com",
+        username="admin",
+        first_name="Dayan",
+        last_name="Melisov",
+        full_name="",
+        password_hash=hash_password("correct-horse-battery"),
+        role=Role.ADMIN,
+    )
+    db.add(user)
+    db.commit()
+    assert user.full_name == "Dayan Melisov"
+    for login in ("admin", "ADMIN", "dayan.melisov@gmail.com"):
+        resp = client.post(
+            "/auth/login",
+            data={"login": login, "password": "correct-horse-battery"},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 303, login
+        client.cookies.clear()

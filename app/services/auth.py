@@ -12,7 +12,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 from fastapi import Depends, HTTPException, Request, status
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -215,6 +215,6 @@ def find_user_by_login(db: Session, login: str) -> User | None:
     if not login:
         return None
     stmt = select(User).where(
-        (User.email == login.lower()) | (User.username == login)
+        (User.email == login.lower()) | (func.lower(User.username) == login.lower())
     )
     return db.scalars(stmt).first()

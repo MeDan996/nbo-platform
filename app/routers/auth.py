@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.config import settings
 from app.db import utcnow
@@ -113,7 +113,8 @@ def register(
     ctx: PageContext = Depends(get_context),
     email: str = Form(...),
     username: str = Form(...),
-    full_name: str = Form(...),
+    first_name: str = Form(...),
+    last_name: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
     school_id: str = Form(""),
@@ -122,11 +123,16 @@ def register(
     db = ctx.db
     email = email.strip().lower()
     username = username.strip()
+    first_name = first_name.strip()[:100]
+    last_name = last_name.strip()[:100]
     errors: list[str] = []
+
+    if not first_name or not last_name:
+        errors.append("common.required")
 
     if db.scalars(select(User).where(User.email == email)).first():
         errors.append("auth.error.email_taken")
-    if db.scalars(select(User).where(User.username == username)).first():
+    if db.scalars(select(User).where(func.lower(User.username) == username.lower())).first():
         errors.append("auth.error.username_taken")
     if not USERNAME_RE.match(username):
         errors.append("auth.error.username_invalid")
@@ -146,7 +152,8 @@ def register(
             values={
                 "email": email,
                 "username": username,
-                "full_name": full_name,
+                "first_name": first_name,
+                "last_name": last_name,
                 "school_id": school_id,
                 "grade": grade,
             },
@@ -155,7 +162,9 @@ def register(
     user = User(
         email=email,
         username=username,
-        full_name=full_name.strip()[:200],
+        first_name=first_name,
+        last_name=last_name,
+        full_name=f"{first_name} {last_name}"[:200],
         password_hash=hash_password(password),
         role=Role.PARTICIPANT,
         locale=normalise(ctx.locale),

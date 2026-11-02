@@ -101,6 +101,8 @@ STRINGS: dict[str, tuple[str, str, str]] = {
     "auth.register.title": ("Create your account", "Создайте аккаунт", "Аккаунт түзүңүз"),
     "auth.email": ("Email", "Электронная почта", "Электрондук почта"),
     "auth.username": ("Username", "Имя пользователя", "Колдонуучу аты"),
+    "auth.first_name": ("First name", "Имя", "Аты"),
+    "auth.last_name": ("Surname", "Фамилия", "Фамилиясы"),
     "auth.full_name": ("Full name", "Полное имя", "Толук аты-жөнү"),
     "auth.password": ("Password", "Пароль", "Сырсөз"),
     "auth.password_confirm": ("Confirm password", "Подтвердите пароль", "Сырсөздү ырастаңыз"),

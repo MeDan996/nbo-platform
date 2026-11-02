@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Float, ForeignKey, Integer, JSON, String, Text, event
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, EnumType, UtcDateTime
@@ -44,6 +44,9 @@ class User(Base):
 
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    first_name: Mapped[str] = mapped_column(String(100), default="")
+    last_name: Mapped[str] = mapped_column(String(100), default="")
+    # Display name, kept in sync with first_name + last_name on every save.
     full_name: Mapped[str] = mapped_column(String(200))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[Role] = mapped_column(EnumType(Role), default=Role.PARTICIPANT, index=True)
@@ -116,3 +119,13 @@ class PasswordResetToken(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
     used_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+
+
+@event.listens_for(User, "before_insert")
+@event.listens_for(User, "before_update")
+def _sync_full_name(_mapper, _connection, user: User) -> None:
+    """Keep the display name in step with the separate name parts."""
+    first = (user.first_name or "").strip()
+    last = (user.last_name or "").strip()
+    if first or last:
+        user.full_name = f"{first} {last}".strip()[:200]

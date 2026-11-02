@@ -36,6 +36,8 @@ def _bootstrap_admin() -> None:
             User(
                 email=email,
                 username=email.split("@")[0][:50],
+                first_name="Administrator",
+                last_name="",
                 full_name="Administrator",
                 password_hash=hash_password(password),
                 role=Role.ADMIN,
