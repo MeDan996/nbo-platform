@@ -52,15 +52,21 @@ def test_any_staff_can_change_status(client, db):
     assert client.post("/issues/1/status", data={"status": "done"}).status_code == 403
 
 
-def test_reporter_shown_by_account_name(client, db):
-    admin = make_user(db, "root", Role.ADMIN, full_name="Administrator")
+def test_reporter_shown_by_first_and_last_name(client, db):
+    admin = make_user(
+        db, "root", Role.ADMIN, full_name="Administrator", first_name="Dayan", last_name="Melisov"
+    )
     db.add(Issue(description="y", issue_type=IssueType.BUG, reporter_id=admin.id))
+    nameless = make_user(db, "nameless", Role.AUTHOR, full_name="Old Style")
+    db.add(Issue(description="z", issue_type=IssueType.BUG, reporter_id=nameless.id))
     db.commit()
-    # Viewed by someone else, so the viewer's own header does not show the name.
+    # Viewed by someone else, so the viewer's own header does not show a name.
     sign_in(client, make_user(db, "viewer", Role.AUTHOR, full_name="Some Viewer"))
     page = client.get("/issues")
-    assert "root" in page.text
+    assert "Dayan Melisov" in page.text
     assert "Administrator" not in page.text
+    # No name parts on file: fall back to the username.
+    assert "nameless" in page.text
 
 
 def test_filters(client, db):

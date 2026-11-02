@@ -77,10 +77,10 @@
               <div class="issue-meta">
                 <span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span>
                 {{ status_control(issue) }}
-                <span class="text-small text-muted">{{ issue.reporter.username if issue.reporter else '—' }} · {{ issue.created_at | dt }}</span>
+                <span class="text-small text-muted">{{ ((issue.reporter.first_name ~ ' ' ~ issue.reporter.last_name) | trim or issue.reporter.username) if issue.reporter else '—' }} · {{ issue.created_at | dt }}</span>
               </div>
             </td>
-            <td class="nowrap col-extra">{{ issue.reporter.username if issue.reporter else '—' }}</td>
+            <td class="nowrap col-extra">{{ ((issue.reporter.first_name ~ ' ' ~ issue.reporter.last_name) | trim or issue.reporter.username) if issue.reporter else '—' }}</td>
             <td class="col-extra"><span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span></td>
             <td class="nowrap col-extra">{{ status_control(issue) }}</td>
             <td class="nowrap text-small text-muted col-extra">{{ issue.created_at | dt }}</td>
