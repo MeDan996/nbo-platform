@@ -432,6 +432,10 @@ table.md-table th { background: var(--bg-2); font-weight: 700; }
 .flash-info    { background: var(--blue-light); color: var(--blue-dark); border-color: #c3d9ff; }
 .flash-warn    { background: var(--gold-light); color: #8a5a00; border-color: #f4dcae; }
 
+/* Author display rules (grid, flex) otherwise beat the browser's [hidden] rule,
+   which left closed modals and hidden panels on screen. */
+[hidden] { display: none !important; }
+
 /* ---------- Modal ------------------------------------------------------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(33,36,44,.55);
