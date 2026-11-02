@@ -253,7 +253,12 @@
     <div class="grid grid-3">
       {% for figure in question.figures %}
       <div class="figure">
-        <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}">
+        {% if figure.id in missing_figures %}
+          <div class="flash flash-warn">The image file for this figure was lost. Delete it and upload it again.</div>
+        {% else %}
+          <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}">
+        {% endif %}
+        {% if figure.in_appendix %}<span class="badge badge-outline">appendix</span>{% endif %}
         <form method="post" action="/creative/questions/{{ question.id }}" class="stack" style="margin-top:10px">
           {% for loc in editor_locales %}
           {% set ftr = (figure.translations | selectattr('locale', 'equalto', loc) | first) %}
