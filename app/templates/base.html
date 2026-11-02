@@ -95,15 +95,44 @@
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <script>
-  /* Show stored UTC times in the viewer's own time zone. */
+  /* Times are stored in UTC. Show them in the viewer's own time zone, and let
+     datetime-local fields be edited in local time (converted back on submit). */
   (function () {
     function pad(n) { return (n < 10 ? "0" : "") + n; }
+    function fmt(d, pattern) {
+      return pattern.replace(/%([YmdHMS])/g, function (_, c) {
+        switch (c) {
+          case "Y": return d.getFullYear();
+          case "m": return pad(d.getMonth() + 1);
+          case "d": return pad(d.getDate());
+          case "H": return pad(d.getHours());
+          case "M": return pad(d.getMinutes());
+          default:  return pad(d.getSeconds());
+        }
+      });
+    }
     document.querySelectorAll("time.js-local").forEach(function (el) {
       var d = new Date(el.getAttribute("datetime"));
       if (isNaN(d)) return;
-      el.textContent = pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear() +
-        " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      el.textContent = fmt(d, el.getAttribute("data-fmt") || "%d.%m.%Y %H:%M");
       el.title = d.toString();
+    });
+    document.querySelectorAll("input[type=datetime-local][data-utc]").forEach(function (input) {
+      var raw = input.value;
+      var d = raw ? new Date(raw + ":00Z") : null;
+      if (d && !isNaN(d)) input.value = fmt(d, "%Y-%m-%dT%H:%M");
+      var form = input.form;
+      if (form && !form.dataset.utcBound) {
+        form.dataset.utcBound = "1";
+        form.addEventListener("submit", function () {
+          form.querySelectorAll("input[type=datetime-local][data-utc]").forEach(function (el) {
+            if (!el.value) return;
+            var local = new Date(el.value);
+            if (isNaN(local)) return;
+            el.value = local.toISOString().slice(0, 16);
+          });
+        });
+      }
     });
   })();
 </script>

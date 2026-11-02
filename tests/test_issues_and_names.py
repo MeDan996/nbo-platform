@@ -189,3 +189,15 @@ def test_localtime_filter_marks_up_utc():
     # Naive values come out of SQLite without a zone and are treated as UTC.
     assert "2026-11-02T10:01:05Z" in str(_localtime(datetime(2026, 11, 2, 10, 1, 5)))
     assert str(_localtime(None)) == "—"
+
+
+def test_localtime_filter_custom_format_and_input_helper():
+    from datetime import datetime, timezone
+
+    from app.templating import _localtime, _utc_input
+
+    moment = datetime(2026, 11, 2, 9, 5, 7, tzinfo=timezone.utc)
+    out = str(_localtime(moment, "%H:%M:%S"))
+    assert 'data-fmt="%H:%M:%S"' in out and ">09:05:07 UTC<" in out
+    assert _utc_input(moment) == "2026-11-02T09:05"
+    assert _utc_input(None) == ""

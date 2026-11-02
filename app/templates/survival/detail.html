@@ -26,8 +26,8 @@
     {% if exam.opens_at or exam.closes_at %}
     <hr class="divider">
     <div class="text-small text-muted">
-      {% if exam.opens_at %}{{ t('survival.opens_at') }}: <b>{{ exam.opens_at | dt }}</b>{% endif %}
-      {% if exam.closes_at %} · {{ t('survival.closes_at') }}: <b>{{ exam.closes_at | dt }}</b>{% endif %}
+      {% if exam.opens_at %}{{ t('survival.opens_at') }}: <b>{{ exam.opens_at | localtime }}</b>{% endif %}
+      {% if exam.closes_at %} · {{ t('survival.closes_at') }}: <b>{{ exam.closes_at | localtime }}</b>{% endif %}
     </div>
     {% endif %}
 
@@ -64,7 +64,7 @@
       {% for attempt in my_attempts %}
         <tr>
           <td>#{{ attempt.attempt_number }}</td>
-          <td class="text-small text-muted">{{ attempt.submitted_at | dt if attempt.submitted_at else attempt.started_at | dt }}</td>
+          <td class="text-small text-muted">{{ (attempt.submitted_at or attempt.started_at) | localtime }}</td>
           <td>
             {% if attempt.status == 'in_progress' %}<span class="badge badge-gold">{{ t('survival.resume') }}</span>
             {% elif attempt.status == 'voided' %}<span class="badge badge-red">voided</span>

@@ -28,7 +28,7 @@
             <td>{% set exam = exams.get(change.exam_id) %}
               {% if exam %}<a href="/survival/{{ exam.slug }}/standings">{{ exam.localized_title(locale) }}</a>
               {% else %}—{% endif %}
-              <div class="text-small text-muted">{{ change.at | dt }}</div></td>
+              <div class="text-small text-muted">{{ change.at | localtime }}</div></td>
             <td class="num"><b>#{{ change.rank }}</b></td>
             <td class="num text-muted">{{ change.participants }}</td>
             <td class="num text-muted">{{ change.performance }}</td>
