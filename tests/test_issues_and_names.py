@@ -176,3 +176,16 @@ def test_participant_cannot_download_attachment(client, db):
     db.commit()
     sign_in(client, make_user(db, "stud9", Role.PARTICIPANT))
     assert client.get("/issues/files/1").status_code == 403
+
+
+def test_localtime_filter_marks_up_utc():
+    from datetime import datetime, timezone
+
+    from app.templating import _localtime
+
+    out = str(_localtime(datetime(2026, 11, 2, 10, 1, 5, tzinfo=timezone.utc)))
+    assert 'datetime="2026-11-02T10:01:05Z"' in out
+    assert "02.11.2026 10:01 UTC" in out
+    # Naive values come out of SQLite without a zone and are treated as UTC.
+    assert "2026-11-02T10:01:05Z" in str(_localtime(datetime(2026, 11, 2, 10, 1, 5)))
+    assert str(_localtime(None)) == "—"

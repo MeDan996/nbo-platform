@@ -94,6 +94,19 @@
 </main>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+  /* Show stored UTC times in the viewer's own time zone. */
+  (function () {
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    document.querySelectorAll("time.js-local").forEach(function (el) {
+      var d = new Date(el.getAttribute("datetime"));
+      if (isNaN(d)) return;
+      el.textContent = pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear() +
+        " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      el.title = d.toString();
+    });
+  })();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
