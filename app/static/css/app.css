@@ -111,7 +111,7 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
 
 @media (max-width: 960px) {
   .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid-sidebar { grid-template-columns: 1fr; }
+  .grid-sidebar { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 620px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -406,7 +406,7 @@ table.md-table th { background: var(--bg-2); font-weight: 700; }
 
 @media (max-width: 960px) {
   .sidebar { position: static; }
-  .sidebar-nav { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; padding-bottom: 6px; }
   .sidebar-nav a { white-space: nowrap; }
 }
 
