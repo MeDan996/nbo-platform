@@ -26,7 +26,7 @@ def test_staff_can_report_and_list(client, db):
     page = client.get("/issues")
     assert page.status_code == 200
     assert "Save button is hidden on phones" in page.text
-    assert "Test Er" in page.text
+    assert "tester1" in page.text
 
 
 def test_blank_description_rejected(client, db):
@@ -36,21 +36,31 @@ def test_blank_description_rejected(client, db):
     assert db.query(Issue).count() == 0
 
 
-def test_only_reviewers_change_status(client, db):
+def test_any_staff_can_change_status(client, db):
     author = make_user(db, "tester3", Role.AUTHOR)
-    reviewer = make_user(db, "lead1", Role.REVIEWER)
     db.add(Issue(description="x", issue_type=IssueType.FEATURE, reporter_id=author.id))
     db.commit()
 
     sign_in(client, author)
-    assert client.post("/issues/1/status", data={"status": "done"}).status_code == 403
-
-    sign_in(client, reviewer)
     resp = client.post("/issues/1/status", data={"status": "working_on"}, follow_redirects=False)
     assert resp.status_code == 303
     db.expire_all()
     assert db.get(Issue, 1).status is IssueStatus.WORKING_ON
     assert client.post("/issues/1/status", data={"status": "nonsense"}).status_code == 400
+
+    sign_in(client, make_user(db, "stud2", Role.PARTICIPANT))
+    assert client.post("/issues/1/status", data={"status": "done"}).status_code == 403
+
+
+def test_reporter_shown_by_account_name(client, db):
+    admin = make_user(db, "root", Role.ADMIN, full_name="Administrator")
+    db.add(Issue(description="y", issue_type=IssueType.BUG, reporter_id=admin.id))
+    db.commit()
+    # Viewed by someone else, so the viewer's own header does not show the name.
+    sign_in(client, make_user(db, "viewer", Role.AUTHOR, full_name="Some Viewer"))
+    page = client.get("/issues")
+    assert "root" in page.text
+    assert "Administrator" not in page.text
 
 
 def test_filters(client, db):

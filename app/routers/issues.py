@@ -1,10 +1,10 @@
-"""Issues panel: staff report bugs, changes and feature ideas; reviewers triage."""
+"""Issues panel: staff report bugs, changes and feature ideas and update their status."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy import select
 
-from app.models.enums import IssueStatus, IssueType, Role
+from app.models.enums import IssueStatus, IssueType
 from app.models.issue import Issue
 from app.responses import redirect
 from app.templating import PageContext, get_context, templates
@@ -47,7 +47,6 @@ def list_issues(
         issue_types=list(IssueType),
         issue_statuses=list(IssueStatus),
         filters={"status": status, "type": type},
-        can_triage=ctx.user.can(Role.REVIEWER),
     )
 
 
@@ -78,9 +77,7 @@ def set_status(
     status: str = Form(...),
     ctx: PageContext = Depends(get_context),
 ):
-    user = _staff(ctx)
-    if not user.can(Role.REVIEWER):
-        raise HTTPException(status_code=403, detail="common.forbidden")
+    _staff(ctx)
     issue = ctx.db.get(Issue, issue_id)
     if issue is None:
         raise HTTPException(status_code=404, detail="common.not_found")
