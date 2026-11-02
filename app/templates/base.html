@@ -23,6 +23,12 @@
       <span>{{ t('app.name') }}</span>
     </a>
 
+    <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false"
+            aria-controls="header-menu">
+      <span class="nav-toggle-bars" aria-hidden="true"></span>
+    </button>
+
+    <div class="header-menu" id="header-menu">
     <nav class="nav" aria-label="Main">
       <a href="/survival" class="{{ 'active' if nav == 'survival' }}">{{ t('nav.survival') }}</a>
       <a href="/practice" class="{{ 'active' if nav == 'practice' }}">{{ t('nav.practice') }}</a>
@@ -64,8 +70,20 @@
       <a class="btn btn-sm btn-ghost" href="/auth/login">{{ t('nav.login') }}</a>
       <a class="btn btn-sm btn-primary" href="/auth/register">{{ t('nav.register') }}</a>
     {% endif %}
+    </div>
   </div>
 </header>
+<script>
+  (function () {
+    var header = document.querySelector('.site-header');
+    var btn = header && header.querySelector('.nav-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var open = header.classList.toggle('menu-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
+</script>
 {% endblock %}
 
 <main id="main">

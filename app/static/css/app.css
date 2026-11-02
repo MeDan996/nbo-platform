@@ -161,9 +161,55 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
 .nav a:hover { background: var(--bg-2); text-decoration: none; color: var(--blue); }
 .nav a.active { color: var(--blue); background: var(--blue-light); }
 
+/* Desktop: the menu wrapper is transparent so the header lays out as one row. */
+.header-menu { display: contents; }
+.nav-toggle { display: none; }
+
 @media (max-width: 860px) {
   .nav a { padding: 8px 9px; font-size: 14px; }
   .brand span { display: none; }
+}
+
+/* Phones: brand + a toggle in the bar; everything else drops down below it. */
+@media (max-width: 720px) {
+  .site-header { height: auto; min-height: var(--header-h); display: block; }
+  .site-header .wrap { flex-wrap: wrap; min-height: var(--header-h); }
+  .brand span { display: inline; }
+  .nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto; width: 44px; height: 44px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--bg); cursor: pointer;
+  }
+  .nav-toggle:hover { background: var(--bg-2); }
+  .nav-toggle-bars,
+  .nav-toggle-bars::before,
+  .nav-toggle-bars::after {
+    display: block; width: 20px; height: 2px; border-radius: 2px;
+    background: var(--ink); transition: transform .2s, background .2s;
+  }
+  .nav-toggle-bars { position: relative; }
+  .nav-toggle-bars::before, .nav-toggle-bars::after { content: ""; position: absolute; left: 0; }
+  .nav-toggle-bars::before { top: -6px; }
+  .nav-toggle-bars::after { top: 6px; }
+  .menu-open .nav-toggle-bars { background: transparent; }
+  .menu-open .nav-toggle-bars::before { top: 0; transform: rotate(45deg); }
+  .menu-open .nav-toggle-bars::after { top: 0; transform: rotate(-45deg); }
+
+  .header-menu {
+    display: none; flex-direction: column; align-items: stretch; gap: 10px;
+    flex: 0 0 100%; padding: 4px 0 14px;
+    max-height: calc(100vh - var(--header-h)); overflow-y: auto;
+  }
+  .menu-open .header-menu { display: flex; }
+  .header-menu .spacer { display: none; }
+  .header-menu .nav { flex-direction: column; align-items: stretch; gap: 2px; }
+  .header-menu .nav a { padding: 12px 12px; font-size: 16px; }
+  .header-menu > form.row,
+  .header-menu > a.row { justify-content: space-between; padding: 0 4px; }
+  .header-menu > form.row select { flex: 1; }
+  .header-menu .inline-form .btn,
+  .header-menu > .btn { width: 100%; }
 }
 
 /* ---------- Buttons ----------------------------------------------------- */
