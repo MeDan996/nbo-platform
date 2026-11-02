@@ -39,6 +39,9 @@
       {% if user %}
         <a href="/stats" class="{{ 'active' if nav == 'stats' }}">{{ t('nav.statistics') }}</a>
       {% endif %}
+      {% if user and user.is_staff %}
+        <a href="/issues" class="{{ 'active' if nav == 'issues' }}">{{ t('nav.issues') }}</a>
+      {% endif %}
       {% if user and user.is_admin %}
         <a href="/admin" class="{{ 'active' if nav == 'admin' }}">{{ t('nav.admin') }}</a>
       {% endif %}

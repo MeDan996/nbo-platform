@@ -611,3 +611,10 @@ body.exam-mode { background: var(--bg-2); }
   body { background: #fff; }
   .card, .question-card { border: 1px solid #ccc; break-inside: avoid; }
 }
+
+/* ---------- Issues ------------------------------------------------------ */
+.issue-meta { display: none; }
+@media (max-width: 720px) {
+  .col-extra { display: none; }
+  .issue-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+}

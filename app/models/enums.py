@@ -113,3 +113,15 @@ class EventKind(StrEnum):
     NETWORK_DROP = "network_drop"
     IP_CHANGE = "ip_change"
     SUBMIT = "submit"
+
+
+class IssueType(StrEnum):
+    BUG = "bug"
+    CHANGE = "change"
+    FEATURE = "feature"
+
+
+class IssueStatus(StrEnum):
+    SUBMITTED = "submitted"
+    WORKING_ON = "working_on"
+    DONE = "done"

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ t('issues.title') }}{% endblock %}
+{% block content %}
+{% set status_badge = {'submitted': 'badge-outline', 'working_on': 'badge-gold', 'done': 'badge-green'} %}
+{% macro status_control(issue) %}
+  {% if can_triage %}
+    <form method="post" action="/issues/{{ issue.id }}/status" class="row" style="gap:6px">
+      <select name="status" aria-label="{{ t('issues.status') }}" onchange="this.form.submit()"
+              style="width:auto;padding:5px 30px 5px 10px;font-size:14px">
+        {% for s in issue_statuses %}
+          <option value="{{ s.value }}" {{ 'selected' if issue.status == s }}>{{ t('issues.status.' ~ s.value) }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn btn-sm btn-outline" type="submit">{{ t('issues.update') }}</button></noscript>
+    </form>
+  {% else %}
+    <span class="badge {{ status_badge[issue.status.value] }}">{{ t('issues.status.' ~ issue.status.value) }}</span>
+  {% endif %}
+{% endmacro %}
+{% set type_badge = {'bug': 'badge-red', 'change': 'badge-gold', 'feature': 'badge-blue'} %}
+<div class="wrap page">
+  <h1>{{ t('issues.title') }}</h1>
+
+  <div class="card" style="margin:16px 0">
+    <h2 style="font-size:18px">{{ t('issues.report') }}</h2>
+    <form method="post" action="/issues">
+      <div class="field">
+        <label for="description">{{ t('issues.description') }}</label>
+        <textarea id="description" name="description" rows="4" maxlength="5000" required
+                  placeholder="{{ t('issues.placeholder') }}"></textarea>
+      </div>
+      <div class="row row-wrap" style="align-items:flex-end">
+        <div class="field" style="margin:0;min-width:160px">
+          <label for="issue_type">{{ t('issues.type') }}</label>
+          <select id="issue_type" name="issue_type">
+            {% for it in issue_types %}
+              <option value="{{ it.value }}">{{ t('issues.type.' ~ it.value) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <span class="spacer"></span>
+        <button class="btn btn-primary" type="submit">{{ t('issues.submit') }}</button>
+      </div>
+    </form>
+  </div>
+
+  <form method="get" action="/issues" class="row row-wrap" style="margin-bottom:12px;align-items:flex-end">
+    <div class="field" style="margin:0;min-width:150px">
+      <label for="f-status">{{ t('issues.status') }}</label>
+      <select id="f-status" name="status" onchange="this.form.submit()">
+        <option value="">{{ t('issues.all') }}</option>
+        {% for s in issue_statuses %}
+          <option value="{{ s.value }}" {{ 'selected' if filters.status == s.value }}>{{ t('issues.status.' ~ s.value) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0;min-width:150px">
+      <label for="f-type">{{ t('issues.type') }}</label>
+      <select id="f-type" name="type" onchange="this.form.submit()">
+        <option value="">{{ t('issues.all') }}</option>
+        {% for it in issue_types %}
+          <option value="{{ it.value }}" {{ 'selected' if filters.type == it.value }}>{{ t('issues.type.' ~ it.value) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <noscript><button class="btn btn-sm btn-outline" type="submit">OK</button></noscript>
+  </form>
+
+  <div class="card card-flush">
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th class="num">#</th><th>{{ t('issues.description') }}</th><th class="col-extra">{{ t('issues.reporter') }}</th>
+          <th class="col-extra">{{ t('issues.type') }}</th><th class="col-extra">{{ t('issues.status') }}</th><th class="col-extra">{{ t('issues.date') }}</th>
+        </tr></thead>
+        <tbody>
+        {% for issue in issues %}
+          <tr>
+            <td class="num mono">{{ issue.id }}</td>
+            <td style="min-width:240px">
+              <div style="white-space:pre-wrap">{{ issue.description }}</div>
+              <div class="issue-meta">
+                <span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span>
+                {{ status_control(issue) }}
+                <span class="text-small text-muted">{{ issue.reporter.full_name if issue.reporter else '—' }} · {{ issue.created_at | dt }}</span>
+              </div>
+            </td>
+            <td class="nowrap col-extra">{{ issue.reporter.full_name if issue.reporter else '—' }}</td>
+            <td class="col-extra"><span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span></td>
+            <td class="nowrap col-extra">{{ status_control(issue) }}</td>
+            <td class="nowrap text-small text-muted col-extra">{{ issue.created_at | dt }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="text-muted" style="padding:20px">{{ t('issues.empty') }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

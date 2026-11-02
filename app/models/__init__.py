@@ -5,6 +5,7 @@ from app.models.analytics import (
     RatingChange,
     TopicMastery,
 )
+from app.models.issue import Issue
 from app.models.media import MediaFile
 from app.models.attempt import Attempt, AttemptAnswer, AttemptEvent
 from app.models.content import (
@@ -52,6 +53,7 @@ from app.models.security import (
 from app.models.user import PasswordResetToken, School, User
 
 __all__ = [
+    "Issue",
     "MediaFile",
     "Attempt",
     "AttemptAnswer",
