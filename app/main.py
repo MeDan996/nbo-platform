@@ -12,7 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import UPLOAD_DIR, settings
 from app.db import Base, engine
-from app.routers import admin, auth, creative, practice, public, survival, userstats
+from app.routers import admin, auth, creative, media, practice, public, survival, userstats
 from app.templating import templates
 
 log = logging.getLogger("nbo")
@@ -82,7 +82,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    app.mount("/media", StaticFiles(directory=UPLOAD_DIR), name="media")
+    app.include_router(media.router)
 
     app.include_router(public.router)
     app.include_router(auth.router)

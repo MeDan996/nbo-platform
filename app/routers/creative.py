@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, or_, select
 
-from app.config import UPLOAD_DIR, settings
+from app.config import settings
 from app.db import utcnow
 from app.models.content import (
     Figure,
@@ -31,6 +31,7 @@ from app.models.enums import (
     Role,
 )
 from app.models.exam import Exam, ExamQuestion, ExamSection
+from app.models.media import MediaFile
 from app.models.security import AuditLog
 from app.responses import redirect
 from app.services.auth import require_author, require_reviewer
@@ -474,11 +475,13 @@ async def upload_figure(
     data = await file.read()
     mime = _validate_image(data, file.filename or "upload.png")
 
-    folder = UPLOAD_DIR / "figures" / str(question.id)
-    folder.mkdir(parents=True, exist_ok=True)
     ext = Path(file.filename or "x.png").suffix.lower()
     name = f"{secrets.token_hex(8)}{ext}"
-    (folder / name).write_bytes(data)
+    ctx.db.add(
+        MediaFile(
+            path=f"figures/{question.id}/{name}", mime_type=mime, size=len(data), data=data
+        )
+    )
 
     figure = Figure(
         question_id=question.id,
@@ -501,7 +504,7 @@ def delete_figure(question_id: int, figure_id: int, ctx: PageContext = Depends(g
     figure = ctx.db.get(Figure, figure_id)
     if figure is None or figure.question_id != question.id:
         raise HTTPException(status_code=404, detail="common.not_found")
-    # The file itself is left on disk: another question may have been cloned from
+    # The stored file is kept: another question may have been cloned from
     # this one and still reference the same path.
     ctx.db.delete(figure)
     ctx.db.flush()
