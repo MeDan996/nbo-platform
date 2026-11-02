@@ -18,11 +18,16 @@
 
   <div class="card" style="margin:16px 0">
     <h2 style="font-size:18px">{{ t('issues.report') }}</h2>
-    <form method="post" action="/issues">
+    <form method="post" action="/issues" enctype="multipart/form-data">
       <div class="field">
         <label for="description">{{ t('issues.description') }}</label>
         <textarea id="description" name="description" rows="4" maxlength="5000" required
                   placeholder="{{ t('issues.placeholder') }}"></textarea>
+      </div>
+      <div class="field">
+        <label for="files">{{ t('issues.attach') }}</label>
+        <input id="files" name="files" type="file" multiple accept="{{ accept }}">
+        <div class="field-hint">{{ t('issues.attach_hint', count=max_files, size=max_mb) }}</div>
       </div>
       <div class="row row-wrap" style="align-items:flex-end">
         <div class="field" style="margin:0;min-width:160px">
@@ -74,6 +79,20 @@
             <td class="num mono">{{ issue.id }}</td>
             <td style="min-width:240px">
               <div style="white-space:pre-wrap">{{ issue.description }}</div>
+              {% if issue.attachments %}
+              <div class="row row-wrap" style="gap:8px;margin-top:8px">
+                {% for a in issue.attachments %}
+                  {% if a.is_image %}
+                    <a href="/issues/files/{{ a.id }}" target="_blank" rel="noopener" title="{{ a.filename }}">
+                      <img src="/issues/files/{{ a.id }}" alt="{{ a.filename }}" loading="lazy"
+                           style="height:72px;width:auto;max-width:140px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">
+                    </a>
+                  {% else %}
+                    <a class="badge badge-outline" href="/issues/files/{{ a.id }}" download>📎 {{ a.filename }}</a>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
               <div class="issue-meta">
                 <span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span>
                 {{ status_control(issue) }}

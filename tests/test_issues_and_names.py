@@ -103,3 +103,76 @@ def test_username_login_and_name_parts(client, db):
         )
         assert resp.status_code == 303, login
         client.cookies.clear()
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+
+
+def test_report_with_screenshot_and_file(client, db):
+    from app.models.issue import IssueAttachment
+
+    author = make_user(db, "tester5", Role.AUTHOR)
+    sign_in(client, author)
+    resp = client.post(
+        "/issues",
+        data={"description": "see screenshot", "issue_type": "bug"},
+        files=[
+            ("files", ("Screen Shot 1.png", PNG, "image/png")),
+            ("files", ("notes.txt", b"hello", "text/plain")),
+        ],
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303
+    attachments = db.query(IssueAttachment).order_by(IssueAttachment.id).all()
+    assert [a.filename for a in attachments] == ["Screen Shot 1.png", "notes.txt"]
+    image = client.get(f"/issues/files/{attachments[0].id}")
+    assert image.status_code == 200 and image.content == PNG
+    assert image.headers["content-type"] == "image/png"
+    assert image.headers["content-disposition"].startswith("inline")
+    text = client.get(f"/issues/files/{attachments[1].id}")
+    assert text.headers["content-disposition"].startswith("attachment")
+    page = client.get("/issues")
+    assert f"/issues/files/{attachments[0].id}" in page.text
+
+
+def test_report_without_files_still_works(client, db):
+    sign_in(client, make_user(db, "tester6", Role.AUTHOR))
+    resp = client.post(
+        "/issues", data={"description": "no files", "issue_type": "change"}, follow_redirects=False
+    )
+    assert resp.status_code == 303
+
+
+def test_bad_attachments_rejected(client, db):
+    from app.models.issue import IssueAttachment
+
+    sign_in(client, make_user(db, "tester7", Role.AUTHOR))
+    cases = [
+        ("evil.exe", b"MZ\x90", "application/octet-stream"),
+        ("fake.png", b"<html>not an image</html>", "image/png"),
+        ("x.svg", b"<svg onload=alert(1)>", "image/svg+xml"),
+    ]
+    for name, data, mime in cases:
+        resp = client.post(
+            "/issues",
+            data={"description": "bad", "issue_type": "bug"},
+            files=[("files", (name, data, mime))],
+        )
+        assert resp.status_code == 400, name
+    assert db.query(Issue).count() == 0
+    assert db.query(IssueAttachment).count() == 0
+    many = [("files", (f"{i}.txt", b"x", "text/plain")) for i in range(6)]
+    assert client.post("/issues", data={"description": "z", "issue_type": "bug"}, files=many).status_code == 400
+
+
+def test_participant_cannot_download_attachment(client, db):
+    from app.models.issue import IssueAttachment
+
+    author = make_user(db, "tester8", Role.AUTHOR)
+    issue = Issue(description="d", issue_type=IssueType.BUG, reporter_id=author.id)
+    db.add(issue)
+    db.flush()
+    db.add(IssueAttachment(issue_id=issue.id, filename="a.png", mime_type="image/png", size=3, data=b"abc"))
+    db.commit()
+    sign_in(client, make_user(db, "stud9", Role.PARTICIPANT))
+    assert client.get("/issues/files/1").status_code == 403
