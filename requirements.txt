@@ -13,3 +13,4 @@ pypdf>=6.0
 httpx>=0.28
 psycopg[binary]>=3.2
 pytest>=8.0
+pymupdf>=2.1

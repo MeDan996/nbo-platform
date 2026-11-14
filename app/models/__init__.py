@@ -5,6 +5,19 @@ from app.models.analytics import (
     RatingChange,
     TopicMastery,
 )
+from app.models.archive import (
+    IboAnswer,
+    IboAsset,
+    IboExam,
+    IboExplanation,
+    IboItem,
+    IboItemOption,
+    IboQuestion,
+    IboQuestionElement,
+    IboSourceDocument,
+    IboSourcePage,
+    IboTextVariant,
+)
 from app.models.attempt import Attempt, AttemptAnswer, AttemptEvent
 from app.models.content import (
     Figure,
@@ -75,6 +88,17 @@ __all__ = [
     "FigureTranslation",
     "FlagSeverity",
     "FlagStatus",
+    "IboAnswer",
+    "IboAsset",
+    "IboExam",
+    "IboExplanation",
+    "IboItem",
+    "IboItemOption",
+    "IboQuestion",
+    "IboQuestionElement",
+    "IboSourceDocument",
+    "IboSourcePage",
+    "IboTextVariant",
     "IpRecord",
     "LoginEvent",
     "PasswordResetToken",
