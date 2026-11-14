@@ -27,6 +27,10 @@
       <div class="row row-wrap" style="gap:6px">
         {{ status_badge(question.status, t) }}
         {% if question.is_official_ibo %}<span class="badge badge-purple">IBO</span>{% endif %}
+        {% if question.archive_question_id %}
+          <a class="badge badge-purple" href="/creative/archive/{{ question.archive_question_id }}">
+            ↳ {{ question.source_ref or t('archive.title') }}</a>
+        {% endif %}
         {% if question.template_of_id %}
           <a class="badge badge-outline" href="/creative/questions/{{ question.template_of_id }}">
             ↳ {{ t('creative.from_template') }}</a>
@@ -36,6 +40,9 @@
     </div>
   </div>
 
+  {% if request.query_params.get('from_archive') %}
+    <div class="flash flash-info">{{ t('archive.draft_created') }}</div>
+  {% endif %}
   {% if request.query_params.get('saved') %}
     <div class="flash flash-success">{{ t('common.save') }} ✓</div>
   {% endif %}
@@ -60,7 +67,7 @@
           <div class="loc-tabs" data-tabs="stem">
             {% for loc in editor_locales %}
               <button type="button" data-loc="{{ loc }}"
-                      class="{{ 'active' if loc == settings.default_locale }}">{{ loc | upper }}</button>
+                      class="{{ 'active' if loc == start_locale }}">{{ loc | upper }}</button>
             {% endfor %}
           </div>
         </div>
@@ -68,7 +75,7 @@
         {% for loc in editor_locales %}
         {% set tr = (question.translations | selectattr('locale', 'equalto', loc) | first) %}
         <div class="loc-pane" data-tabs-pane="stem" data-loc="{{ loc }}"
-             {{ 'hidden' if loc != settings.default_locale }}>
+             {{ 'hidden' if loc != start_locale }}>
           <div class="field">
             <label for="title__{{ loc }}">{{ t('creative.exam_title') }} ({{ loc | upper }})</label>
             <input id="title__{{ loc }}" name="title__{{ loc }}" value="{{ tr.title if tr else '' }}">
@@ -102,7 +109,7 @@
           <div class="loc-tabs" data-tabs="st">
             {% for loc in editor_locales %}
               <button type="button" data-loc="{{ loc }}"
-                      class="{{ 'active' if loc == settings.default_locale }}">{{ loc | upper }}</button>
+                      class="{{ 'active' if loc == start_locale }}">{{ loc | upper }}</button>
             {% endfor %}
           </div>
         </div>
@@ -128,7 +135,7 @@
           {% for loc in editor_locales %}
           {% set str_ = (statement.translations | selectattr('locale', 'equalto', loc) | first) %}
           <div class="loc-pane" data-tabs-pane="st" data-loc="{{ loc }}"
-               {{ 'hidden' if loc != settings.default_locale }}>
+               {{ 'hidden' if loc != start_locale }}>
             <div class="field">
               <label for="st__{{ statement.id }}__text__{{ loc }}">
                 {{ t('creative.statement_text') }} ({{ loc | upper }})</label>

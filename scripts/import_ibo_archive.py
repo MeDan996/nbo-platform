@@ -101,8 +101,8 @@ def main():
             # crops of replaced exams that nothing points at any more
             from sqlalchemy import text
             n = db.execute(text(
-                "DELETE FROM ibo_assets a WHERE NOT EXISTS (SELECT 1 FROM ibo_question_elements e "
-                "WHERE e.asset_id = a.id)")).rowcount
+                "DELETE FROM ibo_assets WHERE id NOT IN (SELECT asset_id FROM ibo_question_elements "
+                "WHERE asset_id IS NOT NULL)")).rowcount
             db.commit()
             if n:
                 print(f"removed {n} unreferenced images")

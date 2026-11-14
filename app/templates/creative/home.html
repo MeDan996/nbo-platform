@@ -8,7 +8,8 @@
       <h1>{{ t('creative.title') }}</h1>
       <p class="text-muted">{{ t('creative.subtitle') }}</p>
     </div>
-    <form method="post" action="/creative/questions/new" class="row">
+    <form method="post" action="/creative/questions/new" class="row" style="gap:8px">
+      <a class="btn btn-outline btn-lg" href="/creative/archive">{{ t('archive.start_from') }}</a>
       <button class="btn btn-primary btn-lg" type="submit">+ {{ t('creative.new_question') }}</button>
     </form>
   </div>
@@ -86,6 +87,8 @@
     <aside class="sidebar">
       <nav class="sidebar-nav">
         <a href="/creative/questions">{{ t('nav.question_bank') }}</a>
+        <a href="/creative/archive">{{ t('archive.title') }}
+          {% if archive_count %}<span class="badge badge-purple">{{ archive_count }}</span>{% endif %}</a>
         <a href="/creative/questions?templates_only=1">{{ t('creative.templates') }}
           <span class="badge badge-purple">{{ template_count }}</span></a>
         {% if user.can('reviewer') or user.is_admin %}

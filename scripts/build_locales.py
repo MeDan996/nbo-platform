@@ -306,6 +306,42 @@ STRINGS: dict[str, tuple[str, str, str]] = {
     "creative.figures": ("Figures", "Рисунки", "Сүрөттөр"),
     "creative.upload_figure": ("Upload figure", "Загрузить рисунок", "Сүрөт жүктөө"),
     "creative.caption": ("Caption", "Подпись", "Жазуу"),
+    # --- IBO archive --------------------------------------------------------- #
+    "archive.title": ("IBO archive", "Архив IBO", "IBO архиви"),
+    "archive.subtitle": (
+        "Past IBO theory questions, 2013–2018. Pick one to start a new question from it.",
+        "Теоретические задания IBO 2013–2018. Выберите задание, чтобы создать на его основе новое.",
+        "IBO 2013–2018 теориялык тапшырмалары. Жаңы тапшырма түзүү үчүн бирин тандаңыз.",
+    ),
+    "archive.start_from": ("Start from IBO archive", "Начать с задания IBO", "IBO тапшырмасынан баштоо"),
+    "archive.year": ("Year", "Год", "Жыл"),
+    "archive.paper": ("Paper", "Тур", "Тур"),
+    "archive.section": ("Section", "Раздел", "Бөлүм"),
+    "archive.format": ("Format", "Формат", "Формат"),
+    "archive.source": ("Source", "Источник", "Булак"),
+    "archive.page": ("Page", "Страница", "Барак"),
+    "archive.parse_quality": ("Import quality", "Качество импорта", "Импорттун сапаты"),
+    "archive.clean_only": ("Clean only", "Только без замечаний", "Эскертүүсүздөр гана"),
+    "archive.needs_review": ("Needs checking", "Требует проверки", "Текшерүү керек"),
+    "archive.used": ("Used", "Использовано", "Колдонулган"),
+    "archive.empty": ("No archive questions match.", "Нет подходящих заданий.", "Ылайыктуу тапшырма жок."),
+    "archive.answer": ("Answer", "Ответ", "Жооп"),
+    "archive.original_image": ("Original image", "Исходное изображение", "Баштапкы сүрөт"),
+    "archive.your_versions": ("Drafts made from this question", "Черновики на основе этого задания",
+                              "Ушул тапшырманын негизиндеги долбоорлор"),
+    "archive.template_hint": (
+        "“Use as template” copies the text, figures with captions, statements, answers and explanations "
+        "into a new draft. The archive original is never changed.",
+        "«Использовать как шаблон» копирует текст, рисунки с подписями, утверждения, ответы и пояснения "
+        "в новый черновик. Исходное задание архива не изменяется.",
+        "«Шаблон катары колдонуу» текстти, жазуулары бар сүрөттөрдү, ырастоолорду, жоопторду жана "
+        "түшүндүрмөлөрдү жаңы долбоорго көчүрөт. Архивдеги түп нуска өзгөрбөйт.",
+    ),
+    "archive.draft_created": (
+        "New draft created from the IBO archive. Edit anything, then save — the original stays unchanged.",
+        "Создан черновик на основе задания IBO. Измените что нужно и сохраните — оригинал не изменится.",
+        "IBO тапшырмасынын негизинде долбоор түзүлдү. Каалаганыңызды өзгөртүп, сактаңыз — түп нуска өзгөрбөйт.",
+    ),
     "creative.alt_text": ("Image description", "Описание изображения", "Сүрөттүн сүрөттөлүшү"),
     "creative.translations": ("Translations", "Переводы", "Котормолор"),
     "creative.preview": ("Preview", "Предпросмотр", "Алдын ала көрүү"),

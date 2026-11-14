@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}{{ label }}{% endblock %}
+
+{% block head %}
+<style>
+  .arch-el { margin: 0 0 12px; }
+  .arch-fig { margin: 14px 0; text-align: center; }
+  .arch-fig img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+  .arch-fig figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; text-align: left; }
+  .arch-role { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .arch-item { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .arch-item.is-true { border-left: 4px solid var(--green); }
+  .arch-item.is-false { border-left: 4px solid var(--red); }
+  .arch-expl { font-size: 14px; color: var(--muted); margin-top: 8px; white-space: pre-line; }
+  .md-img { max-width: 100%; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/creative/archive">← {{ t('archive.title') }}</a>
+
+  <div class="row-between row-wrap" style="margin:10px 0 16px;gap:12px">
+    <div>
+      <h1 style="margin-bottom:4px">{{ q.title or label }}</h1>
+      <div class="row row-wrap" style="gap:6px">
+        <span class="badge badge-purple">{{ label }}</span>
+        {% if q.section %}<span class="badge badge-outline">{{ q.section }}</span>{% endif %}
+        <span class="badge badge-outline">{{ q.format }}</span>
+        <span class="badge badge-outline mono">{{ q.language | upper }}</span>
+        {% if q.status != 'active' %}<span class="badge badge-red">{{ q.status }}</span>{% endif %}
+        <span class="text-small text-muted">p. {{ q.page_start }}–{{ q.page_end }}</span>
+      </div>
+    </div>
+    <div class="row" style="gap:8px">
+      {% if prev_id %}<a class="btn btn-outline" href="/creative/archive/{{ prev_id }}">←</a>{% endif %}
+      {% if next_id %}<a class="btn btn-outline" href="/creative/archive/{{ next_id }}">→</a>{% endif %}
+      <form method="post" action="/creative/archive/{{ q.id }}/use">
+        <button class="btn btn-primary" type="submit">{{ t('creative.from_template') }}</button>
+      </form>
+    </div>
+  </div>
+
+  {% if q.needs_review %}
+    <div class="flash flash-warn">
+      <b>{{ t('archive.needs_review') }}:</b> {{ q.parse_notes | join('; ') }}
+    </div>
+  {% endif %}
+
+  {% if drafts %}
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="font-size:16px">{{ t('archive.your_versions') }}</h2>
+    <ul>
+      {% for d in drafts %}
+        <li><a href="/creative/questions/{{ d.id }}">#{{ d.id }} {{ d.title(locale) }}</a>
+          {{ status_badge(d.status, t) }} <span class="text-small text-muted">{{ d.created_at | localtime }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-sidebar">
+    <div class="stack">
+      <div class="card">
+        {% for e in stem if e.parent_id is none %}
+          {% if e.role == 'figure' %}
+            <figure class="arch-fig">
+              {% if e.asset_id %}<img src="/creative/archive/assets/{{ e.asset_id }}" alt="figure" loading="lazy">{% endif %}
+              {% for l in legends.get(e.id, []) %}<figcaption>{{ rich(l.text) | safe }}</figcaption>{% endfor %}
+            </figure>
+          {% elif e.role == 'table' %}
+            <div class="arch-el">{{ table_md(e.attrs.get('rows')) | safe }}
+              {% if e.asset_id %}<details><summary class="text-small text-muted">{{ t('archive.original_image') }}</summary>
+                <img src="/creative/archive/assets/{{ e.asset_id }}" alt="table" style="max-width:100%"></details>{% endif %}
+            </div>
+          {% elif e.text %}
+            <div class="arch-el">
+              {% if e.role not in ('paragraph',) %}<div class="arch-role">{{ e.role | replace('_', ' ') }}</div>{% endif %}
+              {% if e.role == 'instruction' %}<b>{{ rich(e.text) | safe }}</b>{% else %}{{ rich(e.text) | safe }}{% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:18px">{{ t('creative.statements') }}</h2>
+        {% for it in q.items %}
+          {% set official = (it.answers | selectattr('status', 'equalto', 'official') | first) %}
+          {% set val = official.value.get('bool') if official else none %}
+          <div class="arch-item {{ 'is-true' if val is true else ('is-false' if val is false else '') }}">
+            <b>{{ it.label }}.</b> {{ rich(it.text) | safe }}
+            {% if it.options %}
+              <ol type="A" style="margin:6px 0 0 18px">{% for o in it.options %}<li>{{ o.text }}</li>{% endfor %}</ol>
+            {% endif %}
+            <div class="text-small" style="margin-top:6px">
+              {{ t('archive.answer') }}: <b>{{ official.value_text if official else '—' }}</b>
+              {% for a in it.answers if a.status != 'official' %}
+                <span class="badge badge-outline" title="{{ a.note }}">{{ a.status }}: {{ a.value_text }}</span>
+              {% endfor %}
+            </div>
+            {% for x in expl_by_item.get(it.id, []) %}
+              <div class="arch-expl">{{ rich(x.text) | safe }}</div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">—</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h2 style="font-size:16px">{{ t('creative.explanation') }}</h2>
+        {% for x in expl_by_item.get(none, []) %}
+          <div class="arch-el">
+            <div class="arch-role">{{ x.kind }}</div>
+            <div style="white-space:pre-line">{{ rich(x.text) | safe }}</div>
+            {% for e in expl_elements.get(x.id, []) if e.asset_id %}
+              <img src="/creative/archive/assets/{{ e.asset_id }}" alt="figure" style="max-width:100%;margin-top:6px">
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted text-small">—</p>
+        {% endfor %}
+      </div>
+      <div class="card text-small text-muted">{{ t('archive.template_hint') }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
