@@ -17,7 +17,7 @@
         <tbody>
         {% for row in rows %}
           <tr>
-            <td class="mono text-small">{{ row.at | dt }}</td>
+            <td class="mono text-small">{{ row.at | localtime }}</td>
             <td>{{ user_chip(row.user, 'sm') }}</td>
             <td class="text-small">{{ exams[row.exam_id].title if exams.get(row.exam_id) else row.exam_id }}</td>
             <td><span class="badge badge-gold">{{ t('rule.' ~ row.rule) if ('rule.' ~ row.rule) else row.rule }}</span>

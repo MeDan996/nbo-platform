@@ -44,7 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pypdf import PdfReader  # noqa: E402
 
-from app.config import UPLOAD_DIR  # noqa: E402
+from app.models.media import MediaFile  # noqa: E402
 from app.db import Base, SessionLocal, engine  # noqa: E402
 from app.models.content import (  # noqa: E402
     Figure,
@@ -262,8 +262,8 @@ def collect_images(path: Path) -> dict[int, list[tuple[str, bytes]]]:
     return cleaned
 
 
-def save_figure(data: bytes, name: str, question_id: int) -> tuple[str, str]:
-    """Write the image under data/uploads and return (relative path, mime)."""
+def save_figure(db, data: bytes, name: str, question_id: int) -> tuple[str, str]:
+    """Store the image in the database and return (relative path, mime)."""
     suffix = Path(name).suffix.lower() or ".png"
     if suffix not in {".png", ".jpg", ".jpeg", ".gif", ".webp"}:
         suffix = ".png"
@@ -272,11 +272,12 @@ def save_figure(data: bytes, name: str, question_id: int) -> tuple[str, str]:
         ".gif": "image/gif", ".webp": "image/webp",
     }[suffix]
 
-    folder = UPLOAD_DIR / "figures" / str(question_id)
-    folder.mkdir(parents=True, exist_ok=True)
     filename = hashlib.sha1(data).hexdigest()[:16] + suffix
-    (folder / filename).write_bytes(data)
-    return f"figures/{question_id}/{filename}", mime
+    path = f"figures/{question_id}/{filename}"
+    if db.query(MediaFile).filter(MediaFile.path == path).first() is None:
+        db.add(MediaFile(path=path, mime_type=mime, size=len(data), data=data))
+        db.flush()
+    return path, mime
 
 
 # --------------------------------------------------------------------------- #
@@ -470,7 +471,7 @@ def import_paper(dry_run: bool = False, with_figures: bool = True) -> int:
                 order = 0
                 for page in range(item.first_page, item.last_page + 1):
                     for name, data in images.get(page, []):
-                        path, mime = save_figure(data, name, question.id)
+                        path, mime = save_figure(db, data, name, question.id)
                         figure = Figure(
                             question_id=question.id,
                             order=order,

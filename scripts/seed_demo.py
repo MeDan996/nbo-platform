@@ -72,11 +72,14 @@ def seed_schools(db) -> list[School]:
 
 
 def ensure_user(db, email, username, full_name, role, school=None, grade=None) -> User:
+    first_name, _, last_name = full_name.partition(" ")
     user = db.query(User).filter(User.email == email).one_or_none()
     if user is None:
         user = User(
             email=email,
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             full_name=full_name,
             password_hash=hash_password(DEMO_PASSWORD),
             role=role,

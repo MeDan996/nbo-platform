@@ -6,9 +6,17 @@
     <h1 style="font-size:24px">{{ t('auth.register.title') }}</h1>
     {% for error in errors %}<div class="flash flash-error">{{ t(error) }}</div>{% endfor %}
     <form method="post" action="/auth/register">
-      <div class="field">
-        <label for="full_name">{{ t('auth.full_name') }}</label>
-        <input id="full_name" name="full_name" required value="{{ values.get('full_name', '') }}">
+      <div class="grid grid-2" style="gap:12px">
+        <div class="field">
+          <label for="first_name">{{ t('auth.first_name') }}</label>
+          <input id="first_name" name="first_name" required autocomplete="given-name"
+                 value="{{ values.get('first_name', '') }}">
+        </div>
+        <div class="field">
+          <label for="last_name">{{ t('auth.last_name') }}</label>
+          <input id="last_name" name="last_name" required autocomplete="family-name"
+                 value="{{ values.get('last_name', '') }}">
+        </div>
       </div>
       <div class="grid grid-2" style="gap:14px">
         <div class="field">

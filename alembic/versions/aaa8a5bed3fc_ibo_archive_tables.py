@@ -4,7 +4,7 @@ Archive of past IBO theory papers decomposed into exams, questions, content
 elements, items, answers, explanations and image assets (app/models/archive.py).
 
 Revision ID: aaa8a5bed3fc
-Revises: 4ed39f5fa6d0
+Revises: d0e1f2a3b4c5
 Create Date: 2026-11-14 21:52:55.924611
 
 """
@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = 'aaa8a5bed3fc'
-down_revision: Union[str, Sequence[str], None] = '4ed39f5fa6d0'
+down_revision: Union[str, Sequence[str], None] = 'd0e1f2a3b4c5'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

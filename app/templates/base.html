@@ -9,7 +9,9 @@
   <meta name="description" content="{{ t('app.tagline') }}">
   <meta name="color-scheme" content="light">
   <link rel="stylesheet" href="{{ asset('static/css/app.css') }}">
-  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/img/favicon.ico" sizes="any">
+  <link rel="icon" href="/static/img/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
   <script src="{{ asset('static/js/fingerprint.js') }}" defer></script>
   {% block head %}{% endblock %}
 </head>
@@ -19,10 +21,16 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">N</span>
-      <span>{{ t('app.name') }}</span>
+      <img class="brand-logo" src="{{ asset('static/img/logo.png') }}" alt="{{ t('app.name') }}"
+           width="87" height="42">
     </a>
 
+    <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false"
+            aria-controls="header-menu">
+      <span class="nav-toggle-bars" aria-hidden="true"></span>
+    </button>
+
+    <div class="header-menu" id="header-menu">
     <nav class="nav" aria-label="Main">
       <a href="/survival" class="{{ 'active' if nav == 'survival' }}">{{ t('nav.survival') }}</a>
       <a href="/practice" class="{{ 'active' if nav == 'practice' }}">{{ t('nav.practice') }}</a>
@@ -32,6 +40,9 @@
       <a href="/leaderboard" class="{{ 'active' if nav == 'leaderboard' }}">{{ t('nav.leaderboard') }}</a>
       {% if user %}
         <a href="/stats" class="{{ 'active' if nav == 'stats' }}">{{ t('nav.statistics') }}</a>
+      {% endif %}
+      {% if user and user.is_staff %}
+        <a href="/issues" class="{{ 'active' if nav == 'issues' }}">{{ t('nav.issues') }}</a>
       {% endif %}
       {% if user and user.is_admin %}
         <a href="/admin" class="{{ 'active' if nav == 'admin' }}">{{ t('nav.admin') }}</a>
@@ -64,8 +75,20 @@
       <a class="btn btn-sm btn-ghost" href="/auth/login">{{ t('nav.login') }}</a>
       <a class="btn btn-sm btn-primary" href="/auth/register">{{ t('nav.register') }}</a>
     {% endif %}
+    </div>
   </div>
 </header>
+<script>
+  (function () {
+    var header = document.querySelector('.site-header');
+    var btn = header && header.querySelector('.nav-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var open = header.classList.toggle('menu-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  })();
+</script>
 {% endblock %}
 
 <main id="main">
@@ -73,6 +96,48 @@
 </main>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+  /* Times are stored in UTC. Show them in the viewer's own time zone, and let
+     datetime-local fields be edited in local time (converted back on submit). */
+  (function () {
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    function fmt(d, pattern) {
+      return pattern.replace(/%([YmdHMS])/g, function (_, c) {
+        switch (c) {
+          case "Y": return d.getFullYear();
+          case "m": return pad(d.getMonth() + 1);
+          case "d": return pad(d.getDate());
+          case "H": return pad(d.getHours());
+          case "M": return pad(d.getMinutes());
+          default:  return pad(d.getSeconds());
+        }
+      });
+    }
+    document.querySelectorAll("time.js-local").forEach(function (el) {
+      var d = new Date(el.getAttribute("datetime"));
+      if (isNaN(d)) return;
+      el.textContent = fmt(d, el.getAttribute("data-fmt") || "%d.%m.%Y %H:%M");
+      el.title = d.toString();
+    });
+    document.querySelectorAll("input[type=datetime-local][data-utc]").forEach(function (input) {
+      var raw = input.value;
+      var d = raw ? new Date(raw + ":00Z") : null;
+      if (d && !isNaN(d)) input.value = fmt(d, "%Y-%m-%dT%H:%M");
+      var form = input.form;
+      if (form && !form.dataset.utcBound) {
+        form.dataset.utcBound = "1";
+        form.addEventListener("submit", function () {
+          form.querySelectorAll("input[type=datetime-local][data-utc]").forEach(function (el) {
+            if (!el.value) return;
+            var local = new Date(el.value);
+            if (isNaN(local)) return;
+            el.value = local.toISOString().slice(0, 16);
+          });
+        });
+      }
+    });
+  })();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

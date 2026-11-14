@@ -61,7 +61,7 @@
       {% for attempt in recent %}
         <tr>
           <td>{{ attempt.exam.title if attempt.exam else '—' }}</td>
-          <td class="text-small text-muted">{{ attempt.submitted_at | dt if attempt.submitted_at else '—' }}</td>
+          <td class="text-small text-muted">{{ attempt.submitted_at | localtime }}</td>
           <td class="num">{{ attempt.raw_score | points }} / {{ attempt.max_score | points }}</td>
           <td class="text-right">
             <a class="btn btn-sm btn-outline"

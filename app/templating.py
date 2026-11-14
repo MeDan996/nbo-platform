@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -107,6 +108,35 @@ def _datetime(value: datetime | None, fmt: str = "%d.%m.%Y %H:%M") -> str:
     return value.strftime(fmt)
 
 
+def _localtime(value: datetime | None, fmt: str = "%d.%m.%Y %H:%M") -> Markup:
+    """A moment in time that the browser re-renders in the viewer's own time zone.
+
+    Times are stored and sent as UTC. The server writes the UTC reading as the
+    fallback text (used before the script runs, or with scripts off), and the
+    machine-readable ISO value in `datetime` for the script to convert. `fmt`
+    understands %Y %m %d %H %M %S, the same on both sides.
+    """
+    if value is None:
+        return Markup("—")
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    value = value.astimezone(timezone.utc)
+    return Markup(
+        '<time class="js-local" datetime="{}" data-fmt="{}">{} UTC</time>'
+    ).format(
+        value.strftime("%Y-%m-%dT%H:%M:%SZ"), fmt, value.strftime(fmt)
+    )
+
+
+def _utc_input(value: datetime | None) -> str:
+    """UTC value for a datetime-local input; the page script shows it in local time."""
+    if value is None:
+        return ""
+    if value.tzinfo is not None:
+        value = value.astimezone(timezone.utc)
+    return value.strftime("%Y-%m-%dT%H:%M")
+
+
 def _relative(value: datetime | None, locale: str = "en") -> str:
     """Coarse relative time. Precise enough for 'closes in 2 h'."""
     if value is None:
@@ -173,6 +203,8 @@ class Templating:
         env.filters["points"] = _points
         env.filters["duration"] = _duration
         env.filters["dt"] = _datetime
+        env.filters["localtime"] = _localtime
+        env.filters["utc_input"] = _utc_input
         env.filters["since"] = _relative
         env.filters["initials"] = _initials
         env.globals["tier_for"] = tier_for

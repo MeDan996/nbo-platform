@@ -12,7 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import UPLOAD_DIR, settings
 from app.db import Base, engine
-from app.routers import admin, auth, creative, practice, public, survival, userstats
+from app.routers import admin, auth, creative, issues, media, practice, public, survival, userstats
 from app.templating import templates
 
 log = logging.getLogger("nbo")
@@ -36,6 +36,8 @@ def _bootstrap_admin() -> None:
             User(
                 email=email,
                 username=email.split("@")[0][:50],
+                first_name="Administrator",
+                last_name="",
                 full_name="Administrator",
                 password_hash=hash_password(password),
                 role=Role.ADMIN,
@@ -43,6 +45,15 @@ def _bootstrap_admin() -> None:
         )
         db.commit()
         log.info("Bootstrapped admin %s", email)
+
+
+def _seed_topics() -> None:
+    from app.db import SessionLocal
+    from app.services.topics import ensure_topics
+
+    with SessionLocal() as db:
+        ensure_topics(db)
+        db.commit()
 
 
 def _run_migrations() -> None:
@@ -65,6 +76,7 @@ async def lifespan(_app: FastAPI):
         Base.metadata.create_all(bind=engine)
     else:
         _run_migrations()
+    _seed_topics()
     _bootstrap_admin()
     log.info("NBO platform ready (db=%s)", engine.url)
     yield
@@ -82,7 +94,7 @@ def create_app() -> FastAPI:
 
     app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    app.mount("/media", StaticFiles(directory=UPLOAD_DIR), name="media")
+    app.include_router(media.router)
 
     app.include_router(public.router)
     app.include_router(auth.router)
@@ -90,6 +102,7 @@ def create_app() -> FastAPI:
     app.include_router(practice.router)
     app.include_router(creative.router)
     app.include_router(userstats.router)
+    app.include_router(issues.router)
     app.include_router(admin.router)
 
     @app.exception_handler(StarletteHTTPException)

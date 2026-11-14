@@ -99,8 +99,8 @@
         {% for field, label in [('opens_at', t('survival.opens_at')), ('closes_at', t('survival.closes_at')),
                                 ('results_visible_at', t('admin.publish_results'))] %}
         <div class="field"><label for="{{ field }}">{{ label }}</label>
-          <input id="{{ field }}" name="{{ field }}" type="datetime-local"
-                 value="{{ (exam[field] | dt('%Y-%m-%dT%H:%M')) if exam[field] else '' }}"></div>
+          <input id="{{ field }}" name="{{ field }}" type="datetime-local" data-utc
+                 value="{{ exam[field] | utc_input }}"></div>
         {% endfor %}
         {% for field, label in [('is_rated', t('survival.rated')),
                                 ('shuffle_questions', 'shuffle questions'),

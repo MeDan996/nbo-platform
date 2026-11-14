@@ -64,7 +64,7 @@
               <tr>
                 <td><a href="/survival/attempt/{{ attempt.id }}/result">
                   {{ attempt.exam.localized_title(locale) if attempt.exam else '—' }}</a></td>
-                <td class="text-small text-muted">{{ attempt.submitted_at | dt }}</td>
+                <td class="text-small text-muted">{{ attempt.submitted_at | localtime }}</td>
                 <td class="num">{{ attempt.raw_score | points }} / {{ attempt.max_score | points }}</td>
                 <td class="num">{{ attempt.percent | round | int }}%</td>
                 <td class="num">{{ ('#' ~ attempt.rank) if attempt.rank else '—' }}</td>

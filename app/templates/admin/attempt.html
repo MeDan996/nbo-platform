@@ -33,8 +33,8 @@
         <tr><td>score</td><td><b>{{ attempt.raw_score | points }}</b> / {{ attempt.max_score | points }}
           ({{ attempt.percent | round | int }}%)</td></tr>
         <tr><td>rank</td><td>{{ attempt.rank or '—' }}</td></tr>
-        <tr><td>started</td><td class="mono">{{ attempt.started_at | dt('%Y-%m-%d %H:%M:%S') }}</td></tr>
-        <tr><td>submitted</td><td class="mono">{{ attempt.submitted_at | dt('%Y-%m-%d %H:%M:%S') }}</td></tr>
+        <tr><td>started</td><td class="mono">{{ attempt.started_at | localtime('%Y-%m-%d %H:%M:%S') }}</td></tr>
+        <tr><td>submitted</td><td class="mono">{{ attempt.submitted_at | localtime('%Y-%m-%d %H:%M:%S') }}</td></tr>
         <tr><td>ip</td><td class="mono">{{ attempt.ip_address }}</td></tr>
         <tr><td>seen ips</td><td class="mono text-small">{{ (attempt.seen_ips or []) | join(', ') }}</td></tr>
         <tr><td>device</td><td class="mono text-small">{{ attempt.device_fingerprint or '—' }}</td></tr>
@@ -103,7 +103,7 @@
       <div class="table-wrap" style="max-height:380px;overflow-y:auto">
         <table class="data"><tbody>
         {% for event in events %}
-          <tr><td class="mono text-small">{{ event.at | dt('%H:%M:%S') }}</td>
+          <tr><td class="mono text-small">{{ event.at | localtime('%H:%M:%S') }}</td>
             <td class="text-small">{{ event.kind }}</td>
             <td class="mono text-small text-muted">{{ event.ip_address }}</td></tr>
         {% endfor %}
@@ -115,7 +115,7 @@
       <div class="table-wrap" style="max-height:380px;overflow-y:auto">
         <table class="data"><tbody>
         {% for login in logins %}
-          <tr><td class="mono text-small">{{ login.at | dt('%Y-%m-%d %H:%M') }}</td>
+          <tr><td class="mono text-small">{{ login.at | localtime('%Y-%m-%d %H:%M') }}</td>
             <td>{% if login.success %}<span class="badge badge-green">ok</span>
                 {% else %}<span class="badge badge-red">fail</span>{% endif %}</td>
             <td class="mono text-small">{{ login.ip_address }}</td></tr>

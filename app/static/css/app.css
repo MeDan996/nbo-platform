@@ -111,7 +111,7 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
 
 @media (max-width: 960px) {
   .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .grid-sidebar { grid-template-columns: 1fr; }
+  .grid-sidebar { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 620px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
@@ -146,6 +146,7 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
   margin-right: 12px; white-space: nowrap;
 }
 .brand:hover { text-decoration: none; }
+.brand-logo { height: 42px; width: auto; display: block; }
 .brand-mark {
   width: 30px; height: 30px; border-radius: 8px;
   background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
@@ -161,9 +162,55 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
 .nav a:hover { background: var(--bg-2); text-decoration: none; color: var(--blue); }
 .nav a.active { color: var(--blue); background: var(--blue-light); }
 
+/* Desktop: the menu wrapper is transparent so the header lays out as one row. */
+.header-menu { display: contents; }
+.nav-toggle { display: none; }
+
 @media (max-width: 860px) {
   .nav a { padding: 8px 9px; font-size: 14px; }
   .brand span { display: none; }
+}
+
+/* Phones: brand + a toggle in the bar; everything else drops down below it. */
+@media (max-width: 720px) {
+  .site-header { height: auto; min-height: var(--header-h); display: block; }
+  .site-header .wrap { flex-wrap: wrap; min-height: var(--header-h); }
+  .brand span { display: inline; }
+  .nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto; width: 44px; height: 44px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--bg); cursor: pointer;
+  }
+  .nav-toggle:hover { background: var(--bg-2); }
+  .nav-toggle-bars,
+  .nav-toggle-bars::before,
+  .nav-toggle-bars::after {
+    display: block; width: 20px; height: 2px; border-radius: 2px;
+    background: var(--ink); transition: transform .2s, background .2s;
+  }
+  .nav-toggle-bars { position: relative; }
+  .nav-toggle-bars::before, .nav-toggle-bars::after { content: ""; position: absolute; left: 0; }
+  .nav-toggle-bars::before { top: -6px; }
+  .nav-toggle-bars::after { top: 6px; }
+  .menu-open .nav-toggle-bars { background: transparent; }
+  .menu-open .nav-toggle-bars::before { top: 0; transform: rotate(45deg); }
+  .menu-open .nav-toggle-bars::after { top: 0; transform: rotate(-45deg); }
+
+  .header-menu {
+    display: none; flex-direction: column; align-items: stretch; gap: 10px;
+    flex: 0 0 100%; padding: 4px 0 14px;
+    max-height: calc(100vh - var(--header-h)); overflow-y: auto;
+  }
+  .menu-open .header-menu { display: flex; }
+  .header-menu .spacer { display: none; }
+  .header-menu .nav { flex-direction: column; align-items: stretch; gap: 2px; }
+  .header-menu .nav a { padding: 12px 12px; font-size: 16px; }
+  .header-menu > form.row,
+  .header-menu > a.row { justify-content: space-between; padding: 0 4px; }
+  .header-menu > form.row select { flex: 1; }
+  .header-menu .inline-form .btn,
+  .header-menu > .btn { width: 100%; }
 }
 
 /* ---------- Buttons ----------------------------------------------------- */
@@ -360,7 +407,7 @@ table.md-table th { background: var(--bg-2); font-weight: 700; }
 
 @media (max-width: 960px) {
   .sidebar { position: static; }
-  .sidebar-nav { flex-direction: row; overflow-x: auto; padding-bottom: 6px; }
+  .sidebar-nav { flex-direction: row; flex-wrap: wrap; padding-bottom: 6px; }
   .sidebar-nav a { white-space: nowrap; }
 }
 
@@ -385,6 +432,10 @@ table.md-table th { background: var(--bg-2); font-weight: 700; }
 .flash-success { background: var(--green-light); color: #0a6b2f; border-color: #b6e0c4; }
 .flash-info    { background: var(--blue-light); color: var(--blue-dark); border-color: #c3d9ff; }
 .flash-warn    { background: var(--gold-light); color: #8a5a00; border-color: #f4dcae; }
+
+/* Author display rules (grid, flex) otherwise beat the browser's [hidden] rule,
+   which left closed modals and hidden panels on screen. */
+[hidden] { display: none !important; }
 
 /* ---------- Modal ------------------------------------------------------- */
 .modal-backdrop {
@@ -560,4 +611,11 @@ body.exam-mode { background: var(--bg-2); }
   .site-header, .exam-bar, .btn, .sidebar, .qgrid { display: none !important; }
   body { background: #fff; }
   .card, .question-card { border: 1px solid #ccc; break-inside: avoid; }
+}
+
+/* ---------- Issues ------------------------------------------------------ */
+.issue-meta { display: none; }
+@media (max-width: 720px) {
+  .col-extra { display: none; }
+  .issue-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 }

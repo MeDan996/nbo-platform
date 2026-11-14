@@ -51,7 +51,7 @@ def test_registration_creates_an_account_and_signs_in(client, db):
         data={
             "email": "New.Student@example.test",
             "username": "newstudent",
-            "full_name": "New Student",
+            "first_name": "New", "last_name": "Student",
             "password": "a-good-long-password",
             "password_confirm": "a-good-long-password",
             "school_id": "",
@@ -70,7 +70,7 @@ def test_registration_rejects_a_mismatched_password(client, db):
     response = client.post(
         "/auth/register",
         data={
-            "email": "x@example.test", "username": "xx", "full_name": "X",
+            "email": "x@example.test", "username": "xx", "first_name": "X", "last_name": "Y",
             "password": "a-good-long-password", "password_confirm": "different",
             "school_id": "", "grade": "",
         },
@@ -84,7 +84,7 @@ def test_registration_rejects_a_duplicate_email(client, db):
     response = client.post(
         "/auth/register",
         data={
-            "email": "taken@example.test", "username": "other", "full_name": "Other",
+            "email": "taken@example.test", "username": "other", "first_name": "Other", "last_name": "Person",
             "password": "a-good-long-password", "password_confirm": "a-good-long-password",
             "school_id": "", "grade": "",
         },

@@ -18,6 +18,8 @@ from app.models.archive import (
     IboSourcePage,
     IboTextVariant,
 )
+from app.models.issue import Issue, IssueAttachment
+from app.models.media import MediaFile
 from app.models.attempt import Attempt, AttemptAnswer, AttemptEvent
 from app.models.content import (
     Figure,
@@ -64,6 +66,9 @@ from app.models.security import (
 from app.models.user import PasswordResetToken, School, User
 
 __all__ = [
+    "Issue",
+    "IssueAttachment",
+    "MediaFile",
     "Attempt",
     "AttemptAnswer",
     "AttemptEvent",
