@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     # admin if no user with that email exists. Never overwrites an existing user.
     bootstrap_admin_email: str | None = None
     bootstrap_admin_password: str | None = None
+    # Optional details for that first admin; sensible defaults apply when unset.
+    bootstrap_admin_username: str | None = None
+    bootstrap_admin_first_name: str = "Administrator"
+    bootstrap_admin_last_name: str = ""
 
     # i18n
     default_locale: str = "ru"

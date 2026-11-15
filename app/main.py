@@ -35,10 +35,10 @@ def _bootstrap_admin() -> None:
         db.add(
             User(
                 email=email,
-                username=email.split("@")[0][:50],
-                first_name="Administrator",
-                last_name="",
-                full_name="Administrator",
+                username=(settings.bootstrap_admin_username or email.split("@")[0])[:50],
+                first_name=settings.bootstrap_admin_first_name,
+                last_name=settings.bootstrap_admin_last_name,
+                full_name=f"{settings.bootstrap_admin_first_name} {settings.bootstrap_admin_last_name}".strip(),
                 password_hash=hash_password(password),
                 role=Role.ADMIN,
             )

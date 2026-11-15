@@ -191,6 +191,10 @@ The URL comes from `NBO_DATABASE_URL` via `alembic/env.py`, so app and migration
 
 ---
 
+## Environments and releases
+
+Production deploys from `master`; a separate dev site deploys from `dev`. Changes are tested on dev first and then merged into `master`. See [docs/ENVIRONMENTS.md](docs/ENVIRONMENTS.md).
+
 ## Tests
 
 ```bash
