@@ -30,6 +30,7 @@ from app.models.enums import (
     ReviewDecision,
     Role,
 )
+from app.models.archive import IboQuestion
 from app.models.exam import Exam, ExamQuestion, ExamSection
 from app.models.media import MediaFile
 from app.models.security import AuditLog
@@ -124,6 +125,7 @@ def creative_home(ctx: PageContext = Depends(get_context)):
         counts=counts,
         pending_review=pending_review,
         my_exams=my_exams,
+        archive_count=int(db.scalar(select(func.count(IboQuestion.id))) or 0),
         template_count=int(
             db.scalar(
                 select(func.count(Question.id)).where(Question.is_official_ibo.is_(True))
@@ -335,7 +337,17 @@ def edit_question(question_id: int, ctx: PageContext = Depends(get_context)):
         guess_rate=guess_rate,
         can_review=ctx.user.can(Role.REVIEWER),
         editor_locales=list(settings.locales),
+        start_locale=_start_locale(question),
     )
+
+
+def _start_locale(question: Question) -> str:
+    """Open the editor on the default language, unless the question only has
+    content in another one (an English IBO archive draft, say)."""
+    filled = [tr.locale for tr in question.translations if (tr.stem or "").strip() or tr.title]
+    if not filled or settings.default_locale in filled:
+        return settings.default_locale
+    return next((loc for loc in settings.locales if loc in filled), settings.default_locale)
 
 
 @router.post("/questions/{question_id}")

@@ -5,7 +5,8 @@
 <div class="wrap page">
   <div class="row-between row-wrap">
     <h1>{{ t('nav.question_bank') }}</h1>
-    <form method="post" action="/creative/questions/new">
+    <form method="post" action="/creative/questions/new" class="row" style="gap:8px">
+      <a class="btn btn-outline" href="/creative/archive">{{ t('archive.start_from') }}</a>
       <button class="btn btn-primary" type="submit">+ {{ t('creative.new_question') }}</button>
     </form>
   </div>

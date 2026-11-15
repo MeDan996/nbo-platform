@@ -99,6 +99,11 @@ class Question(Base):
         ForeignKey("questions.id", ondelete="SET NULL")
     )
     template_of: Mapped["Question | None"] = relationship(remote_side="Question.id")
+    # The IBO archive question (app.models.archive) this draft was built from.
+    archive_question_id: Mapped[int | None] = mapped_column(
+        ForeignKey("ibo_questions.id", ondelete="SET NULL", name="fk_questions_archive_question_id"),
+        index=True,
+    )
 
     max_points: Mapped[float] = mapped_column(Float, default=1.0)
     # Overrides the default IBO partial-credit curve for this question.
@@ -147,7 +152,9 @@ class Question(Base):
         t = self.tr(locale)
         if t and t.title:
             return t.title
-        return "Question #%s" % self.id
+        # Untranslated yet: show the title in whichever language has one.
+        other = next((tr.title for tr in self.translations if tr.title), None)
+        return other or "Question #%s" % self.id
 
     @property
     def locales(self) -> list[str]:

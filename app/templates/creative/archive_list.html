@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+{% block title %}{{ t('archive.title') }}{% endblock %}
+{% block content %}
+<div class="wrap page">
+  <a class="text-small" href="/creative">← {{ t('creative.title') }}</a>
+  <div class="row-between row-wrap" style="margin:8px 0 4px">
+    <div>
+      <h1 style="margin-bottom:4px">{{ t('archive.title') }}</h1>
+      <p class="text-muted">{{ t('archive.subtitle') }}</p>
+    </div>
+  </div>
+
+  <form method="get" class="card row row-wrap" style="margin:14px 0;gap:10px;align-items:flex-end">
+    <div class="field grow" style="margin:0;min-width:180px">
+      <label for="q">{{ t('common.search') }}</label>
+      <input id="q" name="q" value="{{ filters.q }}" placeholder="ATP, operon, Hardy-Weinberg…">
+    </div>
+    <div class="field" style="margin:0">
+      <label for="year">{{ t('archive.year') }}</label>
+      <select id="year" name="year">
+        <option value="">{{ t('common.all') }}</option>
+        {% for y in years %}<option value="{{ y }}" {{ 'selected' if filters.year == y|string }}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label for="paper">{{ t('archive.paper') }}</label>
+      <select id="paper" name="paper">
+        <option value="">{{ t('common.all') }}</option>
+        {% for code in exams | map(attribute='paper_code') | unique | sort %}
+          <option value="{{ code }}" {{ 'selected' if filters.paper == code }}>{{ code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0;max-width:220px">
+      <label for="section">{{ t('archive.section') }}</label>
+      <select id="section" name="section">
+        <option value="">{{ t('common.all') }}</option>
+        {% for s in sections %}<option value="{{ s }}" {{ 'selected' if filters.section == s }}>{{ s }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label for="fmt">{{ t('archive.format') }}</label>
+      <select id="fmt" name="fmt">
+        <option value="">{{ t('common.all') }}</option>
+        {% for f in formats %}<option value="{{ f }}" {{ 'selected' if filters.fmt == f }}>{{ f }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label for="review">{{ t('archive.parse_quality') }}</label>
+      <select id="review" name="review">
+        <option value="">{{ t('common.all') }}</option>
+        <option value="hide" {{ 'selected' if filters.review == 'hide' }}>{{ t('archive.clean_only') }}</option>
+        <option value="only" {{ 'selected' if filters.review == 'only' }}>{{ t('archive.needs_review') }}</option>
+      </select>
+    </div>
+    <button class="btn btn-outline" type="submit">{{ t('common.filter') }}</button>
+  </form>
+
+  <p class="text-small text-muted">{{ total }} · {{ t('archive.page') }} {{ page }}/{{ pages }}</p>
+
+  <div class="card card-flush">
+    {% if questions %}
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr>
+          <th>{{ t('archive.source') }}</th><th>{{ t('creative.stem') }}</th>
+          <th>{{ t('archive.format') }}</th><th></th>
+        </tr></thead>
+        <tbody>
+        {% for aq in questions %}
+          <tr>
+            <td class="nowrap mono text-small">
+              <a href="/creative/archive/{{ aq.id }}" style="font-weight:600">IBO {{ aq.exam.year }} {{ aq.exam.paper_code }} · {{ aq.label }}</a>
+              <div class="text-muted">{{ aq.language | upper }}</div>
+            </td>
+            <td>
+              {% if aq.title %}<div style="font-weight:600">{{ aq.title }}</div>{% endif %}
+              <div class="text-small text-muted">{{ excerpt(aq) | excerpt(140) }}</div>
+              <div class="row row-wrap" style="gap:4px;margin-top:4px">
+                {% if aq.section %}<span class="badge badge-outline">{{ aq.section }}</span>{% endif %}
+                {% if aq.status != 'active' %}<span class="badge badge-red">{{ aq.status }}</span>{% endif %}
+                {% if aq.needs_review %}<span class="badge badge-gold" title="{{ aq.parse_notes | join('; ') }}">{{ t('archive.needs_review') }}</span>{% endif %}
+                {% if used.get(aq.id) %}<span class="badge badge-green">{{ t('archive.used') }} ×{{ used[aq.id] }}</span>{% endif %}
+              </div>
+            </td>
+            <td class="text-small">{{ aq.format }} · {{ aq.items | length }}</td>
+            <td class="text-right nowrap">
+              <a class="btn btn-sm btn-outline" href="/creative/archive/{{ aq.id }}">{{ t('creative.preview') }}</a>
+              <form method="post" action="/creative/archive/{{ aq.id }}/use" class="inline-form">
+                <button class="btn btn-sm btn-primary" type="submit">{{ t('creative.from_template') }}</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty_state(t('archive.empty')) }}{% endif %}
+  </div>
+
+  {% if pages > 1 %}
+  <div class="row" style="gap:8px;margin-top:14px">
+    {% if page > 1 %}<a class="btn btn-sm btn-outline" href="?{{ base_qs }}&page={{ page - 1 }}">←</a>{% endif %}
+    {% if page < pages %}<a class="btn btn-sm btn-outline" href="?{{ base_qs }}&page={{ page + 1 }}">→</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
