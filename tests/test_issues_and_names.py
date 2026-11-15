@@ -209,3 +209,61 @@ def test_logo_and_icons_are_served(client):
     page = client.get("/")
     assert "static/img/logo.png" in page.text
     assert "apple-touch-icon" in page.text
+
+
+def _issue_with_file(db, author):
+    from app.models.issue import IssueAttachment
+
+    issue = Issue(description="orig", issue_type=IssueType.BUG, reporter_id=author.id)
+    db.add(issue)
+    db.flush()
+    db.add(IssueAttachment(issue_id=issue.id, filename="a.png", mime_type="image/png", size=len(PNG), data=PNG))
+    db.commit()
+    return issue
+
+
+def test_edit_issue_text_type_and_attachments(client, db):
+    from app.models.issue import IssueAttachment
+
+    author = make_user(db, "editor1", Role.AUTHOR)
+    issue = _issue_with_file(db, author)
+    sign_in(client, author)
+    assert "orig" in client.get(f"/issues/{issue.id}/edit").text
+
+    resp = client.post(
+        f"/issues/{issue.id}/edit",
+        data={"description": "changed text", "issue_type": "feature", "remove": [1]},
+        files=[("files", ("new.png", PNG, "image/png"))],
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303
+    db.expire_all()
+    fresh = db.get(Issue, issue.id)
+    assert fresh.description == "changed text"
+    assert fresh.issue_type is IssueType.FEATURE
+    assert [a.filename for a in fresh.attachments] == ["new.png"]
+    assert db.query(IssueAttachment).count() == 1
+
+
+def test_edit_issue_keeps_attachment_unless_removed(client, db):
+    author = make_user(db, "editor2", Role.AUTHOR)
+    issue = _issue_with_file(db, author)
+    sign_in(client, author)
+    client.post(f"/issues/{issue.id}/edit", data={"description": "only text", "issue_type": "bug"})
+    db.expire_all()
+    assert len(db.get(Issue, issue.id).attachments) == 1
+
+
+def test_edit_issue_validation_and_access(client, db):
+    author = make_user(db, "editor3", Role.AUTHOR)
+    issue = _issue_with_file(db, author)
+    sign_in(client, author)
+    assert client.post(f"/issues/{issue.id}/edit", data={"description": " ", "issue_type": "bug"}).status_code == 400
+    assert client.post(f"/issues/{issue.id}/edit", data={"description": "x", "issue_type": "nope"}).status_code == 400
+    assert client.get("/issues/999/edit").status_code == 404
+    # 1 kept + 5 new is over the limit of 5.
+    many = [("files", (f"{i}.txt", b"x", "text/plain")) for i in range(5)]
+    assert client.post(f"/issues/{issue.id}/edit", data={"description": "x", "issue_type": "bug"}, files=many).status_code == 400
+    sign_in(client, make_user(db, "stud10", Role.PARTICIPANT))
+    assert client.get(f"/issues/{issue.id}/edit").status_code == 403
+    assert client.post(f"/issues/{issue.id}/edit", data={"description": "x", "issue_type": "bug"}).status_code == 403

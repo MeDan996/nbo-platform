@@ -93,6 +93,7 @@
                 {% endfor %}
               </div>
               {% endif %}
+              <div style="margin-top:6px"><a class="text-small" href="/issues/{{ issue.id }}/edit">✎ {{ t('issues.edit') }}</a></div>
               <div class="issue-meta">
                 <span class="badge {{ type_badge[issue.issue_type.value] }}">{{ t('issues.type.' ~ issue.issue_type.value) }}</span>
                 {{ status_control(issue) }}

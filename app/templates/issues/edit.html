@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ t('issues.edit_title', id=issue.id) }}{% endblock %}
+{% block content %}
+<div class="wrap page" style="max-width:720px">
+  <a class="text-small" href="/issues">← {{ t('issues.title') }}</a>
+  <h1 style="margin:10px 0 16px">{{ t('issues.edit_title', id=issue.id) }}</h1>
+
+  <div class="card">
+    <form method="post" action="/issues/{{ issue.id }}/edit" enctype="multipart/form-data">
+      <div class="field">
+        <label for="description">{{ t('issues.description') }}</label>
+        <textarea id="description" name="description" rows="6" maxlength="5000" required>{{ issue.description }}</textarea>
+      </div>
+      <div class="field" style="max-width:220px">
+        <label for="issue_type">{{ t('issues.type') }}</label>
+        <select id="issue_type" name="issue_type">
+          {% for it in issue_types %}
+            <option value="{{ it.value }}" {{ 'selected' if issue.issue_type == it }}>{{ t('issues.type.' ~ it.value) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {% if issue.attachments %}
+      <div class="field">
+        <label>{{ t('issues.current_files') }}</label>
+        <div class="stack" style="gap:10px">
+          {% for a in issue.attachments %}
+          <div class="row" style="gap:12px;align-items:center">
+            {% if a.is_image %}
+              <a href="/issues/files/{{ a.id }}" target="_blank" rel="noopener">
+                <img src="/issues/files/{{ a.id }}" alt="{{ a.filename }}" loading="lazy"
+                     style="height:64px;width:auto;max-width:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line)"></a>
+            {% else %}
+              <a class="badge badge-outline" href="/issues/files/{{ a.id }}" download>📎 {{ a.filename }}</a>
+            {% endif %}
+            <div class="checkbox">
+              <input type="checkbox" id="remove-{{ a.id }}" name="remove" value="{{ a.id }}">
+              <label for="remove-{{ a.id }}">{{ t('issues.remove_file') }}</label>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="field">
+        <label for="files">{{ t('issues.add_files') }}</label>
+        <input id="files" name="files" type="file" multiple accept="{{ accept }}">
+        <div class="field-hint">{{ t('issues.attach_hint', count=max_files, size=max_mb) }}</div>
+      </div>
+
+      <div class="row" style="justify-content:flex-end;gap:10px">
+        <a class="btn btn-outline" href="/issues">{{ t('common.cancel') }}</a>
+        <button class="btn btn-primary" type="submit">{{ t('common.save') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

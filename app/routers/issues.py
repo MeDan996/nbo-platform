@@ -134,6 +134,66 @@ async def create_issue(
     return redirect(ctx, "/issues")
 
 
+def _get_issue(ctx: PageContext, issue_id: int) -> Issue:
+    issue = ctx.db.get(Issue, issue_id)
+    if issue is None:
+        raise HTTPException(status_code=404, detail="common.not_found")
+    return issue
+
+
+@router.get("/{issue_id}/edit")
+def edit_issue_form(issue_id: int, ctx: PageContext = Depends(get_context)):
+    _staff(ctx)
+    return templates.page(
+        ctx,
+        "issues/edit.html",
+        nav="issues",
+        issue=_get_issue(ctx, issue_id),
+        issue_types=list(IssueType),
+        accept=ACCEPT,
+        max_files=MAX_FILES,
+        max_mb=MAX_FILE_BYTES // (1024 * 1024),
+    )
+
+
+@router.post("/{issue_id}/edit")
+async def edit_issue(
+    issue_id: int,
+    description: str = Form(...),
+    issue_type: str = Form("bug"),
+    remove: list[int] = Form(default=[]),
+    files: list[UploadFile] = File(default=[]),
+    ctx: PageContext = Depends(get_context),
+):
+    """Change the text, type and attachments of an existing issue."""
+    _staff(ctx)
+    issue = _get_issue(ctx, issue_id)
+    description = description.strip()
+    if not description:
+        raise HTTPException(status_code=400, detail="common.required")
+    try:
+        kind = IssueType(issue_type)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="issues.type")
+    new_files = await _read_attachments(files)
+    drop = set(remove)
+    kept = [a for a in issue.attachments if a.id not in drop]
+    if len(kept) + len(new_files) > MAX_FILES:
+        raise HTTPException(status_code=400, detail="issues.error.too_many_files")
+
+    issue.description = description[:MAX_DESCRIPTION]
+    issue.issue_type = kind
+    for attachment in list(issue.attachments):
+        if attachment.id in drop:
+            issue.attachments.remove(attachment)  # delete-orphan removes the row
+    for name, mime, data in new_files:
+        issue.attachments.append(
+            IssueAttachment(filename=name, mime_type=mime, size=len(data), data=data)
+        )
+    ctx.db.flush()
+    return redirect(ctx, "/issues")
+
+
 @router.get("/files/{attachment_id}")
 def get_attachment(attachment_id: int, ctx: PageContext = Depends(get_context)):
     _staff(ctx)
