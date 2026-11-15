@@ -46,6 +46,14 @@ Rules of thumb:
 `.github/workflows/tests.yml` runs `pytest` on every push and pull request to
 `dev` and `master`. A red check means do not promote.
 
+## Health check
+
+`/healthz` answers `ok` only when the database responds to a query; otherwise
+it returns `503 database unavailable`. Railway calls it while a new deployment
+starts, and keeps the previous deployment running if the new one fails it. It
+is checked when a deployment starts, not continuously, so use Railway's
+notifications to catch a database that stops later.
+
 ## Configuration per environment
 
 Both environments use the same variables. These differ:

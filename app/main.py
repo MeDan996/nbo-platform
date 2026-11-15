@@ -5,13 +5,15 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import UPLOAD_DIR, settings
-from app.db import Base, engine
+from app.db import Base, engine, get_db
 from app.routers import admin, archive, auth, creative, issues, media, practice, public, survival, userstats
 from app.templating import templates
 
@@ -129,8 +131,19 @@ def create_app() -> FastAPI:
             return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
 
     @app.get("/healthz", response_class=PlainTextResponse, include_in_schema=False)
-    async def healthz() -> str:
-        return "ok"
+    def healthz(db: Session = Depends(get_db)):
+        """Liveness plus database reachability.
+
+        A plain `def` so the blocking query runs in the thread pool. Railway uses
+        this to decide whether a new deployment may go live, so a build that cannot
+        reach its database is held back instead of replacing a working one.
+        """
+        try:
+            db.execute(text("SELECT 1"))
+        except Exception:
+            log.exception("health check: database unreachable")
+            return PlainTextResponse("database unavailable", status_code=503)
+        return PlainTextResponse("ok")
 
     return app
 

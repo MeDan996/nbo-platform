@@ -20,7 +20,29 @@ def test_landing_page_renders_for_a_visitor(client):
 
 
 def test_healthcheck(client):
-    assert client.get("/healthz").text == "ok"
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.text == "ok"
+
+
+def test_healthcheck_fails_when_database_is_down(client):
+    from sqlalchemy.exc import OperationalError
+
+    from app.db import get_db
+    from app.main import app
+
+    class BrokenSession:
+        def execute(self, *args, **kwargs):
+            raise OperationalError("SELECT 1", {}, Exception("connection refused"))
+
+    def broken():
+        yield BrokenSession()
+
+    app.dependency_overrides[get_db] = broken
+    response = client.get("/healthz")
+    assert response.status_code == 503
+    assert response.text == "database unavailable"
+    assert "connection refused" not in response.text  # no internals leaked
 
 
 def test_unknown_page_returns_a_rendered_404(client):
