@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import question_figures %}
 {% block title %}{{ exam.localized_title(locale) }}{% endblock %}
 {% block body_class %}exam-mode{% endblock %}
 
@@ -75,16 +76,7 @@
           {% endif %}
         </div>
 
-        {% if q.figures %}
-        <div class="question-figures">
-          {% for figure in q.figures %}
-          <figure class="figure">
-            <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}" loading="lazy">
-            {% if figure.caption(locale) %}<figcaption>{{ figure.caption(locale) }}</figcaption>{% endif %}
-          </figure>
-          {% endfor %}
-        </div>
-        {% endif %}
+        {{ question_figures(q.figures, locale) }}
 
         {% if q.question_type in ('tf_block',) %}
           <div class="panel" style="margin:0 24px 8px;font-size:13.5px;color:var(--muted)">

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import status_badge %}
+{% from "_macros.html" import status_badge, question_figures %}
 {% block title %}{{ question.title(locale) }}{% endblock %}
 
 {% block head %}
@@ -57,6 +57,8 @@
   {% endif %}
 
   <form method="post" action="/creative/questions/{{ question.id }}" id="question-form">
+  {# First submit button in the form is what the Enter key uses: make it Save. #}
+  <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">{{ t('common.save') }}</button>
   <div class="grid grid-sidebar">
 
     {# ---------------------------------------------------------- main column #}
@@ -99,6 +101,54 @@
           </div>
         </div>
         {% endfor %}
+      </div>
+
+      {# --------------------------------------------------------------- figures #}
+      <div class="card" id="figures">
+        <h2 style="font-size:18px;margin:0 0 12px">{{ t('creative.figures') }}</h2>
+        <div class="stack">
+          {% for figure in question.figures %}
+          <div class="figure fig-edit">
+            {% if figure.id in missing_figures %}
+              <div class="flash flash-warn">The image file for this figure was lost. Delete it and upload it again.</div>
+            {% else %}
+              <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}">
+            {% endif %}
+            {% if figure.in_appendix %}<span class="badge badge-outline">appendix</span>{% endif %}
+            {# Only the language chosen in the question text tabs is shown. #}
+            {% for loc in editor_locales %}
+            {% set ftr = (figure.translations | selectattr('locale', 'equalto', loc) | first) %}
+            <div class="loc-pane" data-tabs-pane="stem" data-loc="{{ loc }}"
+                 {{ 'hidden' if loc != start_locale }}>
+              <div class="field">
+                <label for="fig__{{ figure.id }}__caption__{{ loc }}">{{ t('creative.caption') }} ({{ loc | upper }})</label>
+                <input id="fig__{{ figure.id }}__caption__{{ loc }}" name="fig__{{ figure.id }}__caption__{{ loc }}"
+                       value="{{ ftr.caption if ftr and ftr.caption else '' }}">
+              </div>
+              <div class="field">
+                <label for="fig__{{ figure.id }}__alt__{{ loc }}">{{ t('creative.alt_text') }} ({{ loc | upper }})</label>
+                <input id="fig__{{ figure.id }}__alt__{{ loc }}" name="fig__{{ figure.id }}__alt__{{ loc }}"
+                       value="{{ ftr.alt_text if ftr and ftr.alt_text else '' }}">
+              </div>
+            </div>
+            {% endfor %}
+            <button class="btn btn-sm btn-ghost" type="submit" form="figdel-{{ figure.id }}">{{ t('common.delete') }}</button>
+          </div>
+          {% endfor %}
+        </div>
+
+        {# These controls belong to the separate upload form declared below the page form. #}
+        <div class="row row-wrap" style="margin-top:14px;align-items:flex-end">
+          <div class="field grow" style="margin:0;min-width:220px">
+            <label for="figure-file">{{ t('creative.upload_figure') }}</label>
+            <input id="figure-file" type="file" name="file" accept="image/*" required form="figure-upload-form">
+          </div>
+          <div class="checkbox" style="padding-bottom:10px">
+            <input type="checkbox" id="in_appendix" name="in_appendix" value="1" form="figure-upload-form">
+            <label for="in_appendix">appendix</label>
+          </div>
+          <button class="btn btn-outline" type="submit" form="figure-upload-form">{{ t('creative.upload_figure') }}</button>
+        </div>
       </div>
 
       {# ------------------------------------------------------------ statements #}
@@ -254,54 +304,20 @@
   </div>
   </form>
 
-  {# ----------------------------------------------------------------- figures #}
-  <div class="card" id="figures" style="margin-top:18px">
-    <h2 style="font-size:18px">{{ t('creative.figures') }}</h2>
-    <div class="grid grid-3">
-      {% for figure in question.figures %}
-      <div class="figure">
-        {% if figure.id in missing_figures %}
-          <div class="flash flash-warn">The image file for this figure was lost. Delete it and upload it again.</div>
-        {% else %}
-          <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}">
-        {% endif %}
-        {% if figure.in_appendix %}<span class="badge badge-outline">appendix</span>{% endif %}
-        <form method="post" action="/creative/questions/{{ question.id }}" class="stack" style="margin-top:10px">
-          {% for loc in editor_locales %}
-          {% set ftr = (figure.translations | selectattr('locale', 'equalto', loc) | first) %}
-          <input name="fig__{{ figure.id }}__caption__{{ loc }}" placeholder="{{ t('creative.caption') }} {{ loc|upper }}"
-                 value="{{ ftr.caption if ftr else '' }}" form="question-form">
-          <input name="fig__{{ figure.id }}__alt__{{ loc }}" placeholder="{{ t('creative.alt_text') }} {{ loc|upper }}"
-                 value="{{ ftr.alt_text if ftr else '' }}" form="question-form">
-          {% endfor %}
-        </form>
-        <form method="post" action="/creative/questions/{{ question.id }}/figures/{{ figure.id }}/delete"
-              style="margin-top:8px">
-          <button class="btn btn-sm btn-ghost" type="submit">{{ t('common.delete') }}</button>
-        </form>
-      </div>
-      {% endfor %}
-    </div>
-
-    <form method="post" action="/creative/questions/{{ question.id }}/figures"
-          enctype="multipart/form-data" class="row row-wrap" style="margin-top:14px;align-items:flex-end">
-      <div class="field grow" style="margin:0;min-width:220px">
-        <label for="figure-file">{{ t('creative.upload_figure') }}</label>
-        <input id="figure-file" type="file" name="file" accept="image/*" required>
-      </div>
-      <div class="checkbox" style="padding-bottom:10px">
-        <input type="checkbox" id="in_appendix" name="in_appendix" value="1">
-        <label for="in_appendix">appendix</label>
-      </div>
-      <button class="btn btn-outline" type="submit">{{ t('creative.upload_figure') }}</button>
-    </form>
-  </div>
+  {# Separate forms (a form cannot sit inside another) driven by controls above. #}
+  <form id="figure-upload-form" method="post" action="/creative/questions/{{ question.id }}/figures"
+        enctype="multipart/form-data"></form>
+  {% for figure in question.figures %}
+  <form id="figdel-{{ figure.id }}" method="post"
+        action="/creative/questions/{{ question.id }}/figures/{{ figure.id }}/delete"></form>
+  {% endfor %}
 
   {# ----------------------------------------------------------------- preview #}
   <div class="card" style="margin-top:18px">
     <h2 style="font-size:18px">{{ t('creative.preview') }} ({{ locale | upper }})</h2>
     {% set tr = question.tr(locale) %}
     <div class="question-body" style="padding:0">{{ (tr.stem if tr else '') | md | safe }}</div>
+    {{ question_figures(question.figures, locale, missing_figures) }}
     <div class="statements" style="padding:12px 0 0">
       {% for statement in question.statements %}
       <div class="statement">

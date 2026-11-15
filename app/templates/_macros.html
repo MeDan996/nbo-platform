@@ -140,3 +140,23 @@
   <span>0%</span><span>50%</span><span>100%</span>
 </div>
 {% endmacro %}
+
+
+{# Figures under a question, as the exam player draws them. `missing` is an optional
+   set of figure ids whose image file is gone (shown as a notice, not a broken image). #}
+{% macro question_figures(figures, locale, missing=none) %}
+{% if figures %}
+<div class="question-figures">
+  {% for figure in figures %}
+  <figure class="figure">
+    {% if missing and figure.id in missing %}
+      <div class="flash flash-warn">Image file missing.</div>
+    {% else %}
+      <img src="/media/{{ figure.path }}" alt="{{ figure.alt(locale) }}" loading="lazy">
+    {% endif %}
+    {% if figure.caption(locale) %}<figcaption>{{ figure.caption(locale) }}</figcaption>{% endif %}
+  </figure>
+  {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}

@@ -625,3 +625,9 @@ body.exam-mode { background: var(--bg-2); }
   background: #f5a623; color: #3b2a00; text-align: center;
   font-size: 13px; font-weight: 700; padding: 5px 12px; letter-spacing: .02em;
 }
+
+/* ---------- Figure editor ----------------------------------------------- */
+.fig-edit { max-width: 640px; }
+.fig-edit img { max-width: 100%; width: auto; max-height: 360px; display: block; margin: 0 auto 12px; }
+.fig-edit .field input { width: 100%; }
+.fig-edit .badge { margin-bottom: 8px; }
