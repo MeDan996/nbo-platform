@@ -619,3 +619,9 @@ body.exam-mode { background: var(--bg-2); }
   .col-extra { display: none; }
   .issue-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 }
+
+/* ---------- Non-production banner --------------------------------------- */
+.env-banner {
+  background: #f5a623; color: #3b2a00; text-align: center;
+  font-size: 13px; font-weight: 700; padding: 5px 12px; letter-spacing: .02em;
+}

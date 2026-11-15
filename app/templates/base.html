@@ -8,6 +8,7 @@
   <title>{% block title %}{{ t('app.name') }}{% endblock %}</title>
   <meta name="description" content="{{ t('app.tagline') }}">
   <meta name="color-scheme" content="light">
+  {% if settings.env_label %}<meta name="robots" content="noindex, nofollow">{% endif %}
   <link rel="stylesheet" href="{{ asset('static/css/app.css') }}">
   <link rel="icon" href="/static/img/favicon.ico" sizes="any">
   <link rel="icon" href="/static/img/favicon-32.png" type="image/png" sizes="32x32">
@@ -16,6 +17,9 @@
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+{% if settings.env_label %}
+<div class="env-banner" role="note">{{ settings.env_label | upper }} · test environment, data here is not real</div>
+{% endif %}
 
 {% block header %}
 <header class="site-header">

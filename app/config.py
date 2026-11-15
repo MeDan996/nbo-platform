@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     secret_key: str = "dev-only-insecure-secret-change-me"
     database_url: str = f"sqlite:///{(DATA_DIR / 'nbo.db').as_posix()}"
     debug: bool = True
+    # Names a non-production deployment (for example "dev"). When set, every page
+    # shows a banner saying so and asks search engines not to index it.
+    env_label: str = ""
 
     @model_validator(mode="before")
     @classmethod
