@@ -77,6 +77,23 @@ volume data (or the service) in the Railway dashboard under environment `dev`
 and redeploy: migrations rebuild the schema and the bootstrap admin is created
 again. Never do this in `production`.
 
+## Copying the IBO archive between environments
+
+The archive is parsed from source PDFs that are not in the repository, so a
+fresh environment starts with an empty archive. Copy it from production:
+
+1. Sign in as an admin on production and download
+   `/admin/archive/export` (a gzip file with every archive table and the figure images).
+2. Sign in as an admin on the target environment and upload that file to
+   `/admin/archive/import`, for example
+   `curl -b cookies -F file=@dump.jsonl.gz <url>/admin/archive/import`.
+
+The import replaces the target's archive and keeps row ids, so links between
+rows stay intact. It is **refused on production** (any environment without
+`NBO_ENV_LABEL`), so it cannot overwrite the real archive. Questions authors
+created from the archive are not part of the copy. The dev copy was made this
+way on 15 Nov 2026 (11,794 rows, about 87 MB compressed, a few seconds to load).
+
 ## One-time GitHub setting (recommended)
 
 Protect `master` (Settings → Branches → Add rule) so that it needs a pull
