@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
-from app.archive.sections import GROUP_SLUGS
+from app.archive.sections import GROUP_SLUGS, canonical_paper
 from app.models.archive import IboAsset, IboExam, IboItem, IboQuestion, IboQuestionElement
 from app.models.content import Question
 from app.models.enums import Role
@@ -39,6 +39,7 @@ def archive_list(
     stmt = select(IboQuestion).join(IboExam)
     if year.isdigit():
         stmt = stmt.where(IboExam.year == int(year))
+    paper = canonical_paper(paper)  # old links with ?paper=1 or ?paper=2 keep working
     if paper:
         stmt = stmt.where(IboExam.paper_code == paper)
     if fmt:

@@ -93,3 +93,12 @@ def test_draft_topic_comes_from_the_group(db):
     db.flush()
     from app.models.content import Topic
     assert db.get(Topic, draft.topic_id).slug == "genetics-evolution"
+
+
+def test_old_paper_numbers_in_links_still_work(client, db):
+    q = make_archive_question(db)  # 2013, paper A
+    sign_in(client, make_user(db, "author_p", Role.AUTHOR))
+    assert f"/creative/archive/{q.id}" in client.get("/creative/archive?year=2013&paper=A").text
+    # "1" is the old name for paper A
+    assert f"/creative/archive/{q.id}" in client.get("/creative/archive?year=2013&paper=1").text
+    assert f"/creative/archive/{q.id}" not in client.get("/creative/archive?year=2013&paper=2").text
