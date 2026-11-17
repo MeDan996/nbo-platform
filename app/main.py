@@ -58,6 +58,23 @@ def _seed_topics() -> None:
         db.commit()
 
 
+def _assign_section_groups() -> None:
+    from app.archive.sections import assign_section_groups
+    from app.db import SessionLocal
+
+    try:
+        with SessionLocal() as db:
+            changed = assign_section_groups(db)
+            db.commit()
+    except Exception:
+        # Filing archive questions is a convenience; never stop the site starting.
+        # (A local SQLite file created before the column existed is the usual cause.)
+        log.exception("Could not assign archive section groups")
+        return
+    if changed:
+        log.info("Assigned a section group to %d archive questions", changed)
+
+
 def _run_migrations() -> None:
     """Apply pending Alembic migrations (idempotent)."""
     from alembic import command
@@ -79,6 +96,7 @@ async def lifespan(_app: FastAPI):
     else:
         _run_migrations()
     _seed_topics()
+    _assign_section_groups()
     _bootstrap_admin()
     log.info("NBO platform ready (db=%s)", engine.url)
     yield

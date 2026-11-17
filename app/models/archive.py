@@ -165,6 +165,8 @@ class IboQuestion(Base):
     label: Mapped[str] = mapped_column(String(40))  # "Q. 12", "12."
     title: Mapped[str | None] = mapped_column(String(300))
     section: Mapped[str | None] = mapped_column(String(200), index=True)  # topic as printed
+    # One of the eight common sections (see app.archive.sections), for filtering.
+    section_group: Mapped[str | None] = mapped_column(String(40), index=True)
     format: Mapped[str] = mapped_column(String(30), default="true_false", index=True)
     status: Mapped[str] = mapped_column(String(20), default="active", index=True)
     language: Mapped[str] = mapped_column(String(5))

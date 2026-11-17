@@ -27,6 +27,7 @@ import re
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.archive.sections import GROUP_TOPICS
 from app.config import settings
 from app.models.archive import IboAsset, IboQuestion, IboQuestionElement
 from app.models.content import (
@@ -88,6 +89,14 @@ def table_to_markdown(rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
+def topic_for_question(db: Session, archive_q: IboQuestion) -> Topic | None:
+    """The app topic for a draft: from the common section, else the printed name."""
+    slug = GROUP_TOPICS.get(archive_q.section_group or "")
+    if slug:
+        return db.scalars(select(Topic).where(Topic.slug == slug)).first()
+    return topic_for_section(db, archive_q.section)
+
+
 def topic_for_section(db: Session, section: str | None) -> Topic | None:
     if not section:
         return None
@@ -134,7 +143,7 @@ def build_draft(db: Session, archive_q: IboQuestion, author_id: int) -> Question
     other_items = [i for i in archive_q.items if i.item_type not in ("single_choice", "true_false")]
     qtype = QuestionType.MCQ_SINGLE if choice_items and not tf_items else QuestionType.TF_BLOCK
 
-    topic = topic_for_section(db, archive_q.section)
+    topic = topic_for_question(db, archive_q)
     question = Question(
         question_type=qtype,
         status=QuestionStatus.DRAFT,

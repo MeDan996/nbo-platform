@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 
+from app.archive.sections import GROUP_SLUGS
 from app.models.archive import IboAsset, IboExam, IboItem, IboQuestion, IboQuestionElement
 from app.models.content import Question
 from app.models.enums import Role
@@ -42,8 +43,10 @@ def archive_list(
         stmt = stmt.where(IboExam.paper_code == paper)
     if fmt:
         stmt = stmt.where(IboQuestion.format == fmt)
-    if section:
-        stmt = stmt.where(IboQuestion.section == section)
+    if section in GROUP_SLUGS:
+        stmt = stmt.where(IboQuestion.section_group == section)
+    else:
+        section = ""
     if review == "hide":
         stmt = stmt.where(IboQuestion.needs_review.is_(False))
     elif review == "only":
@@ -70,8 +73,8 @@ def archive_list(
     ).all()) if rows else {}
 
     exams = list(db.scalars(select(IboExam).order_by(IboExam.year, IboExam.paper_code)))
-    sections = [s for s in db.scalars(
-        select(IboQuestion.section).where(IboQuestion.section.is_not(None)).distinct().order_by(IboQuestion.section))]
+    present = set(db.scalars(select(IboQuestion.section_group).where(IboQuestion.section_group.is_not(None)).distinct()))
+    sections = [slug for slug in GROUP_SLUGS if slug in present]
     formats = list(db.scalars(select(IboQuestion.format).distinct().order_by(IboQuestion.format)))
 
     def excerpt(question: IboQuestion) -> str:

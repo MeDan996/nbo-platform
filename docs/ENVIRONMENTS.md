@@ -94,6 +94,8 @@ rows stay intact. It is **refused on production** (any environment without
 created from the archive are not part of the copy. The dev copy was made this
 way on 15 Nov 2026 (11,794 rows, about 87 MB compressed, a few seconds to load).
 
+How the archive is organised into sections is described in [ARCHIVE_SECTIONS.md](ARCHIVE_SECTIONS.md).
+
 ## One-time GitHub setting (recommended)
 
 Protect `master` (Settings → Branches → Add rule) so that it needs a pull

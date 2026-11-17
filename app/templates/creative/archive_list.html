@@ -36,7 +36,7 @@
       <label for="section">{{ t('archive.section') }}</label>
       <select id="section" name="section">
         <option value="">{{ t('common.all') }}</option>
-        {% for s in sections %}<option value="{{ s }}" {{ 'selected' if filters.section == s }}>{{ s }}</option>{% endfor %}
+        {% for s in sections %}<option value="{{ s }}" {{ 'selected' if filters.section == s }}>{{ t('archive.group.' ~ s) }}</option>{% endfor %}
       </select>
     </div>
     <div class="field" style="margin:0">
@@ -78,7 +78,7 @@
               {% if aq.title %}<div style="font-weight:600">{{ aq.title }}</div>{% endif %}
               <div class="text-small text-muted">{{ excerpt(aq) | excerpt(140) }}</div>
               <div class="row row-wrap" style="gap:4px;margin-top:4px">
-                {% if aq.section %}<span class="badge badge-outline">{{ aq.section }}</span>{% endif %}
+                {% if aq.section_group %}<span class="badge badge-outline" title="{{ aq.section or '' }}">{{ t('archive.group.' ~ aq.section_group) }}</span>{% endif %}
                 {% if aq.status != 'active' %}<span class="badge badge-red">{{ aq.status }}</span>{% endif %}
                 {% if aq.needs_review %}<span class="badge badge-gold" title="{{ aq.parse_notes | join('; ') }}">{{ t('archive.needs_review') }}</span>{% endif %}
                 {% if used.get(aq.id) %}<span class="badge badge-green">{{ t('archive.used') }} ×{{ used[aq.id] }}</span>{% endif %}

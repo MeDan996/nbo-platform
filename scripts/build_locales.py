@@ -47,6 +47,21 @@ STRINGS: dict[str, tuple[str, str, str]] = {
         "Что нужно исправить или добавить? Где вы это увидели и что ожидали?",
         "Эмнени оңдоо же кошуу керек? Муну кайдан көрдүңүз жана эмне күттүңүз?",
     ),
+    "archive.group.cell-biology": ("Cell Biology", "Клеточная биология", "Клетка биологиясы"),
+    "archive.group.genetics": ("Genetics", "Генетика", "Генетика"),
+    "archive.group.evolution": ("Evolution", "Эволюция", "Эволюция"),
+    "archive.group.animal-anatomy-physiology": (
+        "Animal Anatomy and Physiology", "Анатомия и физиология животных",
+        "Жаныбарлардын анатомиясы жана физиологиясы",
+    ),
+    "archive.group.plant-anatomy-physiology": (
+        "Plant Anatomy and Physiology", "Анатомия и физиология растений",
+        "Өсүмдүктөрдүн анатомиясы жана физиологиясы",
+    ),
+    "archive.group.ecology": ("Ecology", "Экология", "Экология"),
+    "archive.group.ethology": ("Ethology", "Этология", "Этология"),
+    "archive.group.biosystematics": ("Biosystematics", "Биосистематика", "Биосистематика"),
+    "archive.printed_as": ("Printed as", "В издании", "Басылмада"),
     "issues.attach": ("Screenshots or files (optional)", "Скриншоты или файлы (необязательно)", "Скриншоттор же файлдар (милдеттүү эмес)"),
     "issues.attach_hint": (
         "Up to {count} files, {size} MB each: images, PDF, text, Word or Excel.",

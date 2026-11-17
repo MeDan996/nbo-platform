@@ -22,6 +22,7 @@ BASE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE))
 
 from app.archive.parse import parse_paper  # noqa: E402
+from app.archive.sections import assign_section_groups  # noqa: E402
 from app.archive.sources import ALL_SPECS  # noqa: E402
 
 
@@ -93,6 +94,8 @@ def main():
             rows.append(r)
             if db is not None:
                 load_paper(db, paper, BASE, with_assets=not args.no_assets, dpi=args.dpi)
+                db.commit()
+                assign_section_groups(db)
                 db.commit()
             print(f"{key}: {r['questions']} questions ({r['cancelled']} cancelled), {r['items']} items, "
                   f"{r['answered']} answered, {r['explanations']} explanations, {r['figures']} figures, "

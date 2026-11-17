@@ -26,7 +26,10 @@
       <h1 style="margin-bottom:4px">{{ q.title or label }}</h1>
       <div class="row row-wrap" style="gap:6px">
         <span class="badge badge-purple">{{ label }}</span>
-        {% if q.section %}<span class="badge badge-outline">{{ q.section }}</span>{% endif %}
+        {% if q.section_group %}<span class="badge badge-outline">{{ t('archive.group.' ~ q.section_group) }}</span>{% endif %}
+        {% if q.section and q.section_group and q.section | lower != t('archive.group.' ~ q.section_group) | lower %}
+          <span class="text-small text-muted">{{ t('archive.printed_as') }}: {{ q.section }}</span>
+        {% endif %}
         <span class="badge badge-outline">{{ q.format }}</span>
         <span class="badge badge-outline mono">{{ q.language | upper }}</span>
         {% if q.status != 'active' %}<span class="badge badge-red">{{ q.status }}</span>{% endif %}
