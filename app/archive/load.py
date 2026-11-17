@@ -7,6 +7,7 @@ from pathlib import Path
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.archive.sections import canonical_paper
 from app.archive.layout import render_crop, strip_markup
 from app.archive.parse import ParsedPaper, PElement
 from app.models.archive import (
@@ -65,13 +66,14 @@ def _asset(db: Session, cache: dict, png: bytes, w: int, h: int, doc_id: int, pa
 
 def load_paper(db: Session, paper: ParsedPaper, base: Path, *, with_assets: bool = True, dpi: int = 150) -> IboExam:
     spec = paper.spec
-    old = db.scalar(select(IboExam).where(IboExam.year == spec.year, IboExam.paper_code == spec.paper_code))
+    paper_code = canonical_paper(spec.paper_code)
+    old = db.scalar(select(IboExam).where(IboExam.year == spec.year, IboExam.paper_code == paper_code))
     if old is not None:
         db.delete(old)
         db.flush()
 
     exam = IboExam(
-        year=spec.year, paper_code=spec.paper_code, title=spec.title, host_country=spec.host_country,
+        year=spec.year, paper_code=paper_code, title=spec.title, host_country=spec.host_country,
         language=spec.lang, total_points=spec.total_points, duration_minutes=spec.duration_minutes,
         instructions=paper.preamble.strip() or None, scoring=spec.scoring,
         extra={"parser": "app.archive", "body_font_size": paper.body_size},

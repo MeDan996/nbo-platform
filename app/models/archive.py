@@ -119,7 +119,7 @@ class IboExam(Base):
     __table_args__ = (UniqueConstraint("year", "paper_code", name="uq_ibo_exam"),)
 
     year: Mapped[int] = mapped_column(Integer, index=True)
-    paper_code: Mapped[str] = mapped_column(String(10))  # "A", "B", "1", "2"
+    paper_code: Mapped[str] = mapped_column(String(10))  # "A" or "B" (papers numbered 1/2 are stored as A/B)
     title: Mapped[str] = mapped_column(String(200))
     host_country: Mapped[str | None] = mapped_column(String(80))
     language: Mapped[str] = mapped_column(String(5))  # language of the question text

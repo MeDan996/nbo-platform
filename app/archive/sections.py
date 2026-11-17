@@ -37,6 +37,15 @@ GROUPS: list[tuple[str, str]] = [
 ]
 GROUP_SLUGS = [slug for slug, _ in GROUPS]
 
+# Some years numbered their two papers 1 and 2; they are the same two papers as
+# A and B in the other years, and are stored as A and B.
+PAPER_ALIASES = {"1": "A", "2": "B"}
+
+
+def canonical_paper(code: str | None) -> str:
+    code = (code or "").strip()
+    return PAPER_ALIASES.get(code, code)
+
 # Section names as printed (lower case) that name exactly one group.
 PRINTED_NAMES: dict[str, str] = {
     "cell biology": "cell-biology",
@@ -81,10 +90,12 @@ def explicit_assignments() -> dict[str, dict[str, str]]:
 
 
 def exam_key(exam: IboExam) -> str:
-    return f"{exam.year}-{exam.paper_code}"
+    return f"{exam.year}-{canonical_paper(exam.paper_code)}"
 
 
 def group_for(key: str, number: int, printed: str | None) -> str | None:
+    year, _, paper = key.partition("-")
+    key = f"{year}-{canonical_paper(paper)}"  # accepts the old 1/2 spelling too
     explicit = explicit_assignments().get(key, {}).get(str(number))
     if explicit:
         return explicit

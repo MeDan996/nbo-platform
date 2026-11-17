@@ -16,7 +16,7 @@ section and is what the filter, the badges and a draft's topic use.
    Cell-molecular-microbiology), 2014 (the Russian equivalents) and 2016. Spellings
    and languages that mean the same thing end up in one section.
 2. **By content**, listed question by question in `app/archive/section_groups.json`
-   (`"2017-1": {"12": "cell-biology", ...}`), for questions that cannot be filed by name:
+   (`"2017-A": {"12": "cell-biology", ...}`), for questions that cannot be filed by name:
    - 2015 and 2018 print no sections at all;
    - 2017 uses themed names ("Disease & Decay") that mix subjects;
    - the combined sections "Genetics and evolution" (2013, 2014, 2016) and

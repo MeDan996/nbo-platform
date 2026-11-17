@@ -35,8 +35,10 @@ def test_printed_names_merge_spellings_and_languages():
 
 def test_explicit_assignment_wins_and_unknown_stays_empty():
     # 2015 papers print no section; the data file decides.
-    assert sections.group_for("2015-1", 1, None) == "animal-anatomy-physiology"
+    assert sections.group_for("2015-A", 1, None) == "animal-anatomy-physiology"
     # a themed 2017 name tells us nothing, an explicit entry does
+    assert sections.group_for("2017-A", 1, "Blueprints Of Life") == "genetics"
+    # the old 1/2 spelling of a paper still finds the same entry
     assert sections.group_for("2017-1", 1, "Blueprints Of Life") == "genetics"
     assert sections.group_for("2099-Z", 1, "Mystery") is None
     assert sections.group_for("2099-Z", 1, None) is None

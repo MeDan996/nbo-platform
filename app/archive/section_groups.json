@@ -61,7 +61,7 @@
   "39": "evolution",
   "40": "genetics"
  },
- "2015-1": {
+ "2015-A": {
   "1": "animal-anatomy-physiology",
   "2": "animal-anatomy-physiology",
   "3": "animal-anatomy-physiology",
@@ -112,7 +112,7 @@
   "48": "plant-anatomy-physiology",
   "49": "genetics"
  },
- "2015-2": {
+ "2015-B": {
   "1": "animal-anatomy-physiology",
   "2": "animal-anatomy-physiology",
   "3": "animal-anatomy-physiology",
@@ -185,7 +185,7 @@
   "90": "genetics",
   "92": "genetics"
  },
- "2017-1": {
+ "2017-A": {
   "1": "genetics",
   "2": "genetics",
   "3": "genetics",
@@ -233,7 +233,7 @@
   "45": "evolution",
   "46": "evolution"
  },
- "2017-2": {
+ "2017-B": {
   "1": "ecology",
   "2": "ecology",
   "3": "animal-anatomy-physiology",
@@ -282,7 +282,7 @@
   "46": "animal-anatomy-physiology",
   "47": "genetics"
  },
- "2018-1": {
+ "2018-A": {
   "1": "genetics",
   "2": "biosystematics",
   "3": "biosystematics",
@@ -331,7 +331,7 @@
   "46": "ethology",
   "47": "evolution"
  },
- "2018-2": {
+ "2018-B": {
   "1": "genetics",
   "2": "genetics",
   "3": "genetics",
