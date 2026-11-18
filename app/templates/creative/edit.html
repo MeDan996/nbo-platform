@@ -10,6 +10,13 @@
                      font-weight:700; cursor:pointer; color:var(--muted); }
   .loc-tabs button.active { background:var(--blue); border-color:var(--blue); color:#fff; }
   .loc-pane[hidden] { display:none; }
+  html { scroll-padding-top: calc(var(--header-h) + 64px); }  /* anchors clear header + language bar */
+  .lang-bar { position:sticky; top:var(--header-h); z-index:20; display:flex; align-items:center;
+              gap:12px; padding:8px 0; margin:0 0 14px; background:var(--bg-2);
+              border-bottom:1px solid var(--line); }
+  .lang-bar .loc-tabs { margin:0; }
+  .lang-bar-label { font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase;
+                    letter-spacing:.04em; }
   .st-card { border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
   .st-card.is-true { border-left:4px solid var(--green); }
   .st-card.is-false { border-left:4px solid var(--red); }
@@ -56,6 +63,17 @@
     {% endif %}
   {% endif %}
 
+  {# One language switch for everything below: text, figures, statements and the preview. #}
+  <div class="lang-bar" role="group" aria-label="{{ t('common.language') }}">
+    <span class="lang-bar-label">{{ t('common.language') }}</span>
+    <div class="loc-tabs" data-tabs="lang">
+      {% for loc in editor_locales %}
+        <button type="button" data-loc="{{ loc }}"
+                class="{{ 'active' if loc == start_locale }}">{{ loc | upper }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
   <form method="post" action="/creative/questions/{{ question.id }}" id="question-form">
   {# First submit button in the form is what the Enter key uses: make it Save. #}
   <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">{{ t('common.save') }}</button>
@@ -66,17 +84,11 @@
       <div class="card">
         <div class="row-between" style="margin-bottom:12px">
           <h2 style="font-size:18px;margin:0">{{ t('creative.stem') }}</h2>
-          <div class="loc-tabs" data-tabs="stem">
-            {% for loc in editor_locales %}
-              <button type="button" data-loc="{{ loc }}"
-                      class="{{ 'active' if loc == start_locale }}">{{ loc | upper }}</button>
-            {% endfor %}
-          </div>
         </div>
 
         {% for loc in editor_locales %}
         {% set tr = (question.translations | selectattr('locale', 'equalto', loc) | first) %}
-        <div class="loc-pane" data-tabs-pane="stem" data-loc="{{ loc }}"
+        <div class="loc-pane" data-tabs-pane="lang" data-loc="{{ loc }}"
              {{ 'hidden' if loc != start_locale }}>
           <div class="field">
             <label for="title__{{ loc }}">{{ t('creative.exam_title') }} ({{ loc | upper }})</label>
@@ -118,7 +130,7 @@
             {# Only the language chosen in the question text tabs is shown. #}
             {% for loc in editor_locales %}
             {% set ftr = (figure.translations | selectattr('locale', 'equalto', loc) | first) %}
-            <div class="loc-pane" data-tabs-pane="stem" data-loc="{{ loc }}"
+            <div class="loc-pane" data-tabs-pane="lang" data-loc="{{ loc }}"
                  {{ 'hidden' if loc != start_locale }}>
               <div class="field">
                 <label for="fig__{{ figure.id }}__caption__{{ loc }}">{{ t('creative.caption') }} ({{ loc | upper }})</label>
@@ -156,12 +168,6 @@
         <div class="row-between" style="margin-bottom:12px">
           <h2 style="font-size:18px;margin:0">{{ t('creative.statements') }}
             <span class="text-muted text-small">({{ question.statements | length }})</span></h2>
-          <div class="loc-tabs" data-tabs="st">
-            {% for loc in editor_locales %}
-              <button type="button" data-loc="{{ loc }}"
-                      class="{{ 'active' if loc == start_locale }}">{{ loc | upper }}</button>
-            {% endfor %}
-          </div>
         </div>
 
         {% for statement in question.statements %}
@@ -184,7 +190,7 @@
 
           {% for loc in editor_locales %}
           {% set str_ = (statement.translations | selectattr('locale', 'equalto', loc) | first) %}
-          <div class="loc-pane" data-tabs-pane="st" data-loc="{{ loc }}"
+          <div class="loc-pane" data-tabs-pane="lang" data-loc="{{ loc }}"
                {{ 'hidden' if loc != start_locale }}>
             <div class="field">
               <label for="st__{{ statement.id }}__text__{{ loc }}">
@@ -313,25 +319,28 @@
   {% endfor %}
 
   {# ----------------------------------------------------------------- preview #}
-  <div class="card" style="margin-top:18px">
-    <h2 style="font-size:18px">{{ t('creative.preview') }} ({{ locale | upper }})</h2>
-    {% set tr = question.tr(locale) %}
+  {% for loc in editor_locales %}
+  <div class="card loc-pane" data-tabs-pane="lang" data-loc="{{ loc }}" style="margin-top:18px"
+       {{ 'hidden' if loc != start_locale }}>
+    <h2 style="font-size:18px">{{ t('creative.preview') }} ({{ loc | upper }})</h2>
+    {% set tr = question.tr(loc) %}
     <div class="question-body" style="padding:0">{{ (tr.stem if tr else '') | md | safe }}</div>
-    {{ question_figures(question.figures, locale, missing_figures) }}
+    {{ question_figures(question.figures, loc, missing_figures) }}
     <div class="statements" style="padding:12px 0 0">
       {% for statement in question.statements %}
       <div class="statement">
         <div class="st-label">{{ statement.label }}</div>
-        <div class="st-text">{{ statement.text(locale) | md | safe }}</div>
+        <div class="st-text">{{ statement.text(loc) | md | safe }}</div>
         <span class="badge {{ 'badge-green' if statement.is_true else 'badge-red' }}">
           {{ t('survival.true') if statement.is_true else t('survival.false') }}</span>
-        {% if statement.explanation(locale) %}
-          <div class="explanation">{{ statement.explanation(locale) | md | safe }}</div>
+        {% if statement.explanation(loc) %}
+          <div class="explanation">{{ statement.explanation(loc) | md | safe }}</div>
         {% endif %}
       </div>
       {% endfor %}
     </div>
   </div>
+  {% endfor %}
 
   {# ---------------------------------------------------------------- actions #}
   <div class="row row-wrap" style="margin:22px 0 8px;justify-content:flex-end">
@@ -347,22 +356,32 @@
 
 {% block scripts %}
 <script>
-/* Locale tabs: each group switches every pane that shares its data-tabs name,
-   so the statement editors all follow the same language as the stem. */
-document.querySelectorAll("[data-tabs]").forEach(function (group) {
-  var name = group.dataset.tabs;
+/* One language switch: every pane in the "lang" group (question text, figure
+   fields, statements, preview) follows it. The choice is remembered for this
+   browser tab, so saving or uploading a figure does not reset it. */
+(function () {
+  var group = document.querySelector('[data-tabs="lang"]');
+  if (!group) return;
+  var KEY = "nbo-editor-lang";
+  function show(loc) {
+    group.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("active", b.dataset.loc === loc);
+    });
+    document.querySelectorAll('[data-tabs-pane="lang"]').forEach(function (pane) {
+      pane.hidden = pane.dataset.loc !== loc;
+    });
+  }
   group.addEventListener("click", function (event) {
     var button = event.target.closest("button[data-loc]");
     if (!button) return;
-    var loc = button.dataset.loc;
-    document.querySelectorAll('[data-tabs="' + name + '"] button').forEach(function (b) {
-      b.classList.toggle("active", b.dataset.loc === loc);
-    });
-    document.querySelectorAll('[data-tabs-pane="' + name + '"]').forEach(function (pane) {
-      pane.hidden = pane.dataset.loc !== loc;
-    });
+    show(button.dataset.loc);
+    try { sessionStorage.setItem(KEY, button.dataset.loc); } catch (e) {}
   });
-});
+  try {
+    var saved = sessionStorage.getItem(KEY);
+    if (saved && group.querySelector('button[data-loc="' + saved + '"]')) show(saved);
+  } catch (e) {}
+})();
 
 /* Colour the statement card as its truth value is toggled. */
 document.querySelectorAll("[data-truth]").forEach(function (input) {

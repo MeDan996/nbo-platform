@@ -45,8 +45,15 @@
 
       <div class="field">
         <label for="files">{{ t('issues.add_files') }}</label>
-        <input id="files" name="files" type="file" multiple accept="{{ accept }}">
-        <div class="field-hint">{{ t('issues.attach_hint', count=max_files, size=max_mb) }}</div>
+        <input id="files" name="files" type="file" multiple accept="{{ accept }}"
+               data-max-files="{{ max_files }}" data-max-mb="{{ max_mb }}"
+               data-msg-too-many="{{ t('issues.js_too_many', count='{count}') }}"
+               data-msg-too-big="{{ t('issues.js_too_big', size='{size}') }}"
+               data-msg-remove="{{ t('issues.remove_file') }}">
+        <div id="file-previews" class="row row-wrap" style="gap:12px;margin-top:10px"></div>
+        <div id="file-note" class="field-hint" style="color:var(--red)" hidden></div>
+        <div class="field-hint">{{ t('issues.attach_hint', count=max_files, size=max_mb) }}
+          {{ t('issues.paste_hint') }}</div>
       </div>
 
       <div class="row" style="justify-content:flex-end;gap:10px">
@@ -56,4 +63,8 @@
     </form>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ asset('static/js/issue-files.js') }}"></script>
 {% endblock %}

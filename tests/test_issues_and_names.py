@@ -267,3 +267,18 @@ def test_edit_issue_validation_and_access(client, db):
     sign_in(client, make_user(db, "stud10", Role.PARTICIPANT))
     assert client.get(f"/issues/{issue.id}/edit").status_code == 403
     assert client.post(f"/issues/{issue.id}/edit", data={"description": "x", "issue_type": "bug"}).status_code == 403
+
+
+def test_issue_forms_load_the_paste_script(client, db):
+    sign_in(client, make_user(db, "paster", Role.AUTHOR))
+    page = client.get("/issues?lang=en").text
+    assert "static/js/issue-files.js" in page
+    assert 'id="file-previews"' in page and 'data-max-files="5"' in page
+    assert "paste a screenshot" in page
+    # the same on the edit page
+    issue = Issue(description="x", issue_type=IssueType.BUG)
+    db.add(issue)
+    db.commit()
+    edit = client.get(f"/issues/{issue.id}/edit?lang=en").text
+    assert "static/js/issue-files.js" in edit and 'id="file-previews"' in edit
+    assert client.get("/static/js/issue-files.js").status_code == 200

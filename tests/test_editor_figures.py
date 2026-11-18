@@ -42,7 +42,7 @@ def test_figure_fields_follow_the_language_tabs(client, db):
     sign_in(client, author)
     html = _open(client, db, question)
     panes = re.findall(
-        r'<div class="loc-pane" data-tabs-pane="stem" data-loc="(\w+)"\s*(hidden)?>\s*<div class="field">\s*<label for="fig__',
+        r'<div class="loc-pane" data-tabs-pane="lang" data-loc="(\w+)"\s*(hidden)?>\s*<div class="field">\s*<label for="fig__',
         html,
     )
     shown = [loc for loc, hidden in panes if not hidden]
@@ -79,3 +79,31 @@ def test_preview_draws_the_figure(client, db):
     preview = html[html.rindex('class="question-body"'):]
     assert f'src="/media/{figure.path}"' in preview
     assert "<figure" in preview and "Coagulation cascade" in preview or "Каскад" in preview
+
+
+def test_one_language_switch_controls_everything(client, db):
+    author = make_user(db, "langauthor", Role.AUTHOR)
+    question, _ = _question_with_figure(db, author)
+    sign_in(client, author)
+    html = _open(client, db, question)
+    # exactly one set of language buttons, and no per-card ones
+    assert html.count('class="loc-tabs"') == 1
+    assert 'data-tabs="stem"' not in html and 'data-tabs="st"' not in html
+    # question text, figure fields, statements and the preview all follow it
+    panes = re.findall(r'data-tabs-pane="lang" data-loc="(\w+)"', html)
+    assert set(panes) == {"ru", "ky", "en"}
+    assert len(panes) >= 3 * 4  # text + figure + statements + preview, per language
+    # one preview per language, only the start language visible
+    previews = re.findall(r'<div class="card loc-pane" data-tabs-pane="lang" data-loc="(\w+)"\s*style="[^"]*"\s*(hidden)?', html)
+    assert len(previews) == 3 and sum(1 for _, hidden in previews if not hidden) == 1
+    # the bar comes before the page form so it can stay at the top
+    assert html.index('class="lang-bar"') < html.index('id="question-form"')
+
+
+def test_preview_is_rendered_in_each_language(client, db):
+    author = make_user(db, "langauthor2", Role.AUTHOR)
+    question, figure = _question_with_figure(db, author)
+    sign_in(client, author)
+    html = _open(client, db, question)
+    assert html.count("Coagulation cascade") >= 2  # the EN caption: input + preview
+    assert "Каскад" in html  # the RU caption is in the RU preview

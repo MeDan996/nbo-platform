@@ -66,9 +66,39 @@ def test_migration_renames_papers_and_labels(tmp_path):
                         "IBO 2020 1 Q. 4", "custom note about paper 1"]
         titles = sorted(r[0] for r in c.execute(text("SELECT title FROM question_translations")))
         assert titles == ["IBO 2017 A Q. 3", "Мой вопрос про paper 1"]  # only the generated label changes
-        issue = c.execute(text("SELECT issue_type, status, description FROM issues ORDER BY id DESC")).first()
-        assert issue[0] == "change" and issue[1] == "done" and "A and B" in issue[2]
+        issue = c.execute(text(
+            "SELECT issue_type, status, description FROM issues WHERE description LIKE '%now A and B everywhere%'"
+        )).first()
+        assert issue is not None and issue[0] == "change" and issue[1] == "done"
 
     _alembic(url, "head")  # running it again changes nothing
     with engine.connect() as c:
         assert sorted(tuple(r) for r in c.execute(text("SELECT year, paper_code FROM ibo_exams"))) == codes
+
+
+def test_migration_marks_issues_28_31_33_done_and_records_layout_fixes(tmp_path):
+    url = f"sqlite:///{(tmp_path / 'i.db').as_posix()}"
+    _alembic(url, "f8a9b0c1d2e3")
+    engine = create_engine(url)
+    now = "2026-11-18 00:00:00"
+    wording = {
+        28: "Question text and statement text have separate language options. Let them use only one at the top",
+        31: "When you in creative mode with ibo archive, to apply filters you need to press apply filter button.",
+        33: "I want to be able to paste screenshots when creating an issue to the description box",
+        34: "A different issue that must stay open",
+    }
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM issues"))  # start from a known list: only the numbers below exist
+        for number in range(1, 35):
+            c.execute(text(
+                "INSERT INTO issues (id, description, issue_type, status, created_at, updated_at) "
+                "VALUES (:i, :d, 'change', 'submitted', :n, :n)"),
+                {"i": number, "d": wording.get(number, f"filler {number}"), "n": now})
+    _alembic(url, "head")
+    with engine.connect() as c:
+        status = {i: s for i, s in c.execute(text("SELECT id, status FROM issues WHERE id <= 34"))}
+        assert status[28] == status[31] == status[33] == "done"
+        assert status[34] == "submitted" and status[27] == "submitted"  # others untouched
+        new = [r for r in c.execute(text("SELECT issue_type, status, description FROM issues WHERE id > 34 ORDER BY id"))]
+        assert len(new) == 2 and all(r[0] == "bug" and r[1] == "done" for r in new)
+        assert "header" in new[0][2] and "phones" in new[1][2]

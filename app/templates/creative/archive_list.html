@@ -11,7 +11,7 @@
     </div>
   </div>
 
-  <form method="get" class="card row row-wrap" style="margin:14px 0;gap:10px;align-items:flex-end">
+  <form method="get" class="card row row-wrap" data-autofilter style="margin:14px 0;gap:10px;align-items:flex-end">
     <div class="field grow" style="margin:0;min-width:180px">
       <label for="q">{{ t('common.search') }}</label>
       <input id="q" name="q" value="{{ filters.q }}" placeholder="ATP, operon, Hardy-Weinberg…">
@@ -106,4 +106,39 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Filters apply as soon as they change; the Filter button is only a fallback
+   for browsers without scripts. Typing in the search box applies once you pause. */
+(function () {
+  var form = document.querySelector("form[data-autofilter]");
+  if (!form) return;
+  var button = form.querySelector('button[type="submit"]');
+  if (button) button.hidden = true;
+  form.querySelectorAll("select").forEach(function (el) {
+    el.addEventListener("change", function () { form.submit(); });
+  });
+  var search = form.querySelector('input[name="q"]');
+  if (!search) return;
+  var FOCUS = "archive-focus-search", timer;
+  search.addEventListener("input", function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      try { sessionStorage.setItem(FOCUS, "1"); } catch (e) {}
+      form.submit();
+    }, 450);
+  });
+  // The page reloads on every change; give the search box back to someone who was typing in it.
+  try {
+    if (sessionStorage.getItem(FOCUS)) {
+      sessionStorage.removeItem(FOCUS);
+      search.focus();
+      var end = search.value.length;
+      search.setSelectionRange(end, end);
+    }
+  } catch (e) {}
+})();
+</script>
 {% endblock %}

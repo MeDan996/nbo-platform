@@ -102,3 +102,11 @@ def test_old_paper_numbers_in_links_still_work(client, db):
     # "1" is the old name for paper A
     assert f"/creative/archive/{q.id}" in client.get("/creative/archive?year=2013&paper=1").text
     assert f"/creative/archive/{q.id}" not in client.get("/creative/archive?year=2013&paper=2").text
+
+
+def test_archive_filters_apply_on_change(client, db):
+    make_archive_question(db)
+    sign_in(client, make_user(db, "author_f", Role.AUTHOR))
+    html = client.get("/creative/archive").text
+    assert "data-autofilter" in html
+    assert "form.submit()" in html  # selects submit the form when they change

@@ -62,6 +62,13 @@ STRINGS: dict[str, tuple[str, str, str]] = {
     "archive.group.ethology": ("Ethology", "Этология", "Этология"),
     "archive.group.biosystematics": ("Biosystematics", "Биосистематика", "Биосистематика"),
     "archive.printed_as": ("Printed as", "В издании", "Басылмада"),
+    "issues.paste_hint": (
+        "You can also paste a screenshot straight into the description box.",
+        "Скриншот можно также вставить прямо в поле описания.",
+        "Скриншотту сүрөттөмө талаасына түздөн-түз чаптасаңыз да болот.",
+    ),
+    "issues.js_too_many": ("Only {count} files can be attached.", "Можно прикрепить не более {count} файлов.", "Эң көп {count} файл тиркесе болот."),
+    "issues.js_too_big": ("That file is larger than {size} MB.", "Файл больше {size} МБ.", "Файл {size} МБ ашып кетти."),
     "issues.attach": ("Screenshots or files (optional)", "Скриншоты или файлы (необязательно)", "Скриншоттор же файлдар (милдеттүү эмес)"),
     "issues.attach_hint": (
         "Up to {count} files, {size} MB each: images, PDF, text, Word or Excel.",

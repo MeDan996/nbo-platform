@@ -57,7 +57,10 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+/* The body must be allowed to grow with its content. With a fixed height of 100%
+   it is only one screen tall, and a sticky header stops sticking after that. */
+html { height: 100%; scroll-padding-top: calc(var(--header-h) + 8px); }
+body { min-height: 100%; }
 
 body {
   margin: 0;
@@ -93,7 +96,8 @@ code { font-family: var(--mono); font-size: .92em; background: var(--bg-3);
 /* ---------- Layout ------------------------------------------------------ */
 .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
 .wrap-narrow { max-width: 760px; margin: 0 auto; padding: 0 20px; }
-.page { padding: 28px 0 64px; }
+/* Vertical only: `.page` shares an element with `.wrap`, whose side gutters it must not reset. */
+.page { padding-top: 28px; padding-bottom: 64px; }
 .stack > * + * { margin-top: 16px; }
 .row { display: flex; gap: 16px; align-items: center; }
 .row-between { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
@@ -631,3 +635,12 @@ body.exam-mode { background: var(--bg-2); }
 .fig-edit img { max-width: 100%; width: auto; max-height: 360px; display: block; margin: 0 auto 12px; }
 .fig-edit .field input { width: 100%; }
 .fig-edit .badge { margin-bottom: 8px; }
+
+/* ---------- Attachment previews on the issue forms ---------------------- */
+.file-preview { position: relative; display: inline-flex; align-items: center; }
+.file-preview img { height: 72px; width: auto; max-width: 140px; object-fit: cover;
+                    border-radius: 8px; border: 1px solid var(--line); display: block; }
+.file-remove { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; padding: 0;
+               border-radius: 50%; border: 1px solid var(--line-2); background: var(--bg);
+               color: var(--ink); font-size: 15px; line-height: 1; cursor: pointer; }
+.file-remove:hover { background: var(--red-light); }
